@@ -18,8 +18,8 @@ function LeetCodeAnalyzer() {
 
       console.log("API Response:", response.data); // debug
 
-      setReport(response.data);
-      setLoading(false);
+        setReport(response.data.data);
+        setLoading(false);
     } catch (error) {
       console.error(error);
       setLoading(false);
@@ -127,12 +127,15 @@ const styles = {
   },
 
   input: {
-    padding: "12px",
-    width: "300px",
-    borderRadius: "10px",
-    border: "none",
-    outline: "none",
-  },
+  padding: "12px",
+  width: "300px",
+  borderRadius: "10px",
+  border: "none",
+  outline: "none",
+  color: "#0f172a",        // ✅ IMPORTANT (dark text)
+  backgroundColor: "white", // already good but make sure explicit
+  fontWeight: "500"
+},
 
   button: {
     padding: "12px 20px",
