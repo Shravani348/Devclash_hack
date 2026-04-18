@@ -90,23 +90,23 @@ class AppAuditor:
             
             if not url.startswith('https'):
                 score -= 20
-                details.append("Site is running on HTTP, not HTTPS.")
+                details.append("Your site isn't using HTTPS — change your hosting settings to secure it so users don't get 'Not Secure' warnings.")
             
             if 'Content-Security-Policy' not in headers:
                 score -= 15
-                details.append("Missing 'Content-Security-Policy' header. This helps prevent XSS.")
+                details.append("No Content-Security-Policy found — add it to your server to protect your site against malicious scripts.")
                 
             if 'X-Frame-Options' not in headers:
                 score -= 10
-                details.append("Missing 'X-Frame-Options' header. Vulnerable to Clickjacking.")
+                details.append("You're missing an X-Frame-Options header — add it so hackers can't trick people into clicking hidden links on your site.")
                 
             if 'X-Content-Type-Options' not in headers:
                 score -= 10
-                details.append("Missing 'X-Content-Type-Options' header. Vulnerable to MIME sniffing.")
+                details.append("Missing X-Content-Type-Options — add this 1 line to your server to stop browsers from misinterpreting your files.")
                 
             if 'Strict-Transport-Security' not in headers and url.startswith('https'):
                 score -= 10
-                details.append("Missing 'Strict-Transport-Security' (HSTS) header.")
+                details.append("No Strict-Transport-Security header — enable it to force browsers to always use a secure connection.")
                 
             # Simulate exposed env file check (just trying a common path)
             parsed_url = urlparse(url)
@@ -114,14 +114,24 @@ class AppAuditor:
             env_resp = requests.get(f"{base_url}/.env", timeout=5)
             if env_resp.status_code == 200 and 'DB_' in env_resp.text:
                 score -= 50
-                details.append("CRITICAL: Exposed .env file detected!")
+                details.append("Your .env file is exposed on the web! Hide it immediately so attackers can't steal your private database passwords.")
                 
         except Exception as e:
             score = 0
             details.append(f"Security check failed: {str(e)}")
             
         out["score"] = max(0, score)
-        out["details"] = details if details else ["Security headers look good."]
+        
+        if out["score"] >= 90:
+            if not details: details.append("Your security setup is flawless! Double-check your API keys aren't pushed to GitHub just to be extra safe.")
+        elif out["score"] >= 70:
+            details.insert(0, "Your security is decent, but a few tweaks will lock it down completely.")
+        elif out["score"] >= 50:
+            details.insert(0, "Your site needs some basic security measures to protect your users.")
+        else:
+            details.insert(0, "Let's be honest — deploying a site with these security gaps would be a major red flag in an interview. Start with the basics first.")
+            
+        out["details"] = details
 
     def _check_performance(self, page, start_time, out):
         score = 100
@@ -154,15 +164,15 @@ class AppAuditor:
         
         if load_time > 3.0:
             score -= 20
-            details.append(f"Total page load time is high ({load_time:.2f}s). Aim for under 3s.")
+            details.append(f"Your page takes {load_time:.1f}s to load — compress your files so visitors on slow mobile data don't leave before it opens.")
             
         if ttfb > 600:
             score -= 15
-            details.append(f"Time to First Byte (TTFB) is slow ({ttfb}ms). Consider better hosting or caching.")
+            details.append(f"Your server is responding slowly ({ttfb}ms) — turn on caching or upgrade your hosting plan.")
             
         if fcp > 2000:
             score -= 15
-            details.append(f"First Contentful Paint (FCP) is slow ({fcp:.0f}ms). Ensure critical CSS/JS is optimized.")
+            details.append(f"The screen stays blank too long ({fcp:.0f}ms) — defer non-critical scripts so users see content faster.")
             
         # Check Unoptimized images
         images = page.evaluate("""() => {
@@ -174,10 +184,20 @@ class AppAuditor:
         needs_lazy = [img['src'] for img in images if img['loading'] != 'lazy']
         if len(needs_lazy) > 5:
             score -= 10
-            details.append(f"Found {len(needs_lazy)} images without 'loading=\"lazy\"'. Lazy load below-the-fold images.")
+            details.append(f"You have {len(needs_lazy)} images loading right away — add 'loading=\"lazy\"' to them so users don't burn their data.")
             
         out["score"] = max(0, score)
-        out["details"] = details if details else ["Performance is well optimized."]
+        
+        if out["score"] >= 90:
+            if not details: details.append("Your site loads lightning fast! Just make sure your large hero images or videos are properly compressed before uploading.")
+        elif out["score"] >= 70:
+            details.insert(0, "Performance is pretty good overall, but fixing this one bottleneck will make it snappier.")
+        elif out["score"] >= 50:
+            details.insert(0, "Your app feels a bit sluggish. Let's fix the easiest performance wins first.")
+        else:
+            details.insert(0, "This load time would definitely frustrate an interviewer or user. Here's exactly what to fix to speed it up.")
+
+        out["details"] = details
 
     def _check_code_quality(self, page, out):
         score = 100
@@ -198,7 +218,7 @@ class AppAuditor:
         
         if max_depth > 12:
             score -= 10
-            details.append(f"DOM is deeply nested ({max_depth} levels). Consider flattening HTML structure.")
+            details.append(f"Your HTML tags are too deeply nested ({max_depth} levels) — simplify your code structure to speed up rendering.")
             
         # Check inline styles
         inline_style_percent = page.evaluate("""() => {
@@ -209,7 +229,7 @@ class AppAuditor:
         
         if inline_style_percent > 30:
             score -= 15
-            details.append(f"Overuse of inline styles detected ({inline_style_percent:.1f}%). Use external stylesheets or CSS classes.")
+            details.append(f"Too many inline styles ({inline_style_percent:.0f}%) — move them to a CSS file or use Tailwind classes to keep things maintainable.")
 
         # Check missing meta tags
         has_viewport = page.evaluate("() => !!document.querySelector('meta[name=\"viewport\"]')")
@@ -217,16 +237,26 @@ class AppAuditor:
         
         if not has_viewport:
             score -= 20
-            details.append("Missing meta viewport tag. Crucial for mobile responsiveness.")
+            details.append("You're missing a viewport meta tag — add it so your site doesn't look completely broken and tiny on phones.")
         if not has_desc:
             score -= 5
-            details.append("Missing meta description. Important for SEO.")
+            details.append("No meta description found — add one so your site looks professional when shared on Google or social media.")
 
         # Check console errors (We can't easily capture retroactively without a listener, but we can do a dummy check)
         # We could add an event listener at page load if we set it up before goto. For now we skip.
 
         out["score"] = max(0, score)
-        out["details"] = details if details else ["Code looks clean and follows best practices."]
+        
+        if out["score"] >= 90:
+            if not details: details.append("Your code is incredibly clean! Try adding OpenGraph tags if you haven't already to make your share links prettier.")
+        elif out["score"] >= 70:
+            details.insert(0, "Code quality is solid, but a quick refactor here will make it much cleaner.")
+        elif out["score"] >= 50:
+            details.insert(0, "The codebase is getting a bit messy — let's tackle these easy fixes first.")
+        else:
+            details.insert(0, "To be honest, this code structure would raise eyebrows in a code review. Fix these critical architectural issues.")
+            
+        out["details"] = details
 
     def _check_animations(self, page, out):
         score = 100
@@ -254,10 +284,20 @@ class AppAuditor:
         
         if expensive_transition > 5:
             score -= 20
-            details.append(f"Found {expensive_transition} elements animating expensive layouts (width/height/margin/etc). Prefer 'transform' and 'opacity' for GPU acceleration.")
+            details.append(f"You're animating layout properties on {expensive_transition} elements — switch to 'transform' or 'opacity' to fix laggy, janky animations.")
             
         out["score"] = max(0, score)
-        out["details"] = details if details else ["Animations use optimized properties (transform/opacity)."]
+        
+        if out["score"] >= 90:
+            if not details: details.append("Your animations are super smooth and Hardware Accelerated! Just remember to keep transition times under 300ms so it feels snappy.")
+        elif out["score"] >= 70:
+            details.insert(0, "Animations work well, but you have one optimization left to make it buttery smooth.")
+        elif out["score"] >= 50:
+            details.insert(0, "A few elements feel sluggish — here's how to fix that and make them feel premium.")
+        else:
+            details.insert(0, "Honestly, these animations are hurting your UX because they lag. Fix the CSS properties shown here.")
+            
+        out["details"] = details
 
     def _check_accessibility(self, page, out):
         score = 100
@@ -270,7 +310,7 @@ class AppAuditor:
         
         if missing_alt > 0:
             score -= max(20, missing_alt * 2)
-            details.append(f"Found {missing_alt} <img> elements missing 'alt' attributes. Critical for screen readers.")
+            details.append(f"There are {missing_alt} images missing alt text — add short descriptions so screen readers can explain them to visually impaired users.")
             
         # Keyboard focus indicators (check inputs)
         missing_aria = page.evaluate("""() => {
@@ -280,7 +320,7 @@ class AppAuditor:
         
         if missing_aria > 0:
             score -= 15
-            details.append(f"Found {missing_aria} button(s) with no text content and no ARIA label.")
+            details.append(f"Found {missing_aria} icon buttons without labels — add an 'aria-label' so people using screen readers know what to click.")
             
         # Heading hierarchy
         headings = page.evaluate("""() => {
@@ -290,11 +330,11 @@ class AppAuditor:
         
         if not headings:
             score -= 10
-            details.append("No headings found on page. Provide a structured heading hierarchy.")
+            details.append("Your page has absolutely no headings — add an <h1> and <h2>s to break up text so users can skim your content easily.")
         else:
             if 1 not in headings:
                 score -= 10
-                details.append("Page is missing an <h1> heading.")
+                details.append("You're missing an <h1> tag — add exactly one to the top of the page so search engines instantly understand what the app is about.")
                 
             # Check skipped levels
             current = headings[0] if headings else 0
@@ -305,10 +345,20 @@ class AppAuditor:
                 current = level
             if skips > 0:
                 score -= min(20, skips * 5)
-                details.append(f"Detected {skips} skipped heading level(s) (e.g. h1 -> h3). Maintain sequential order.")
+                details.append(f"You skipped heading levels {skips} times (like jumping from h1 to h3) — fix the order to keep the page outline logical.")
 
         out["score"] = max(0, score)
-        out["details"] = details if details else ["Accessibility is solid and standard-compliant."]
+        
+        if out["score"] >= 90:
+            if not details: details.append("Your app is incredibly accessible to all users! Keep testing new features with just your keyboard to maintain this.")
+        elif out["score"] >= 70:
+            details.insert(0, "Solid accessibility foundation, but there's a quick fix that will make it fully inclusive.")
+        elif out["score"] >= 50:
+            details.insert(0, "Some users will struggle to use your app. Here is the easiest thing to fix right now.")
+        else:
+            details.insert(0, "A recruiter checking for accessibility would fail this site immediately. But don't worry, start by fixing these issues.")
+            
+        out["details"] = details
 
     def _check_responsiveness(self, browser, url, out):
         score = 100
@@ -337,7 +387,7 @@ class AppAuditor:
                 }""")
                 
                 if has_h_scroll:
-                    details.append(f"Horizontal scroll detected on {vp['name']} breakpoint! Fix overflowing elements.")
+                    details.append(f"Your site breaks and scrolls sideways on a {vp['name']} screen — check your CSS for fixed widths pushing things off-screen.")
                     failed_breakpoints += 1
             except Exception:
                 pass
@@ -348,10 +398,18 @@ class AppAuditor:
         if failed_breakpoints > 0:
             penalty = (failed_breakpoints / total_breakpoints) * 50
             score -= penalty
-        else:
-            details.append("Fluid and responsive layout across all major device widths.")
             
         out["score"] = max(0, int(score))
+
+        if out["score"] >= 90:
+            if not details: details.append("Your layout responds perfectly on all devices! Test it on an actual old phone just to be 100% sure the fonts feel readable.")
+        elif out["score"] >= 70:
+            details.insert(0, "Your app looks great on most screens, but let's fix the one device where it breaks.")
+        elif out["score"] >= 50:
+            details.insert(0, "Mobile users are having a tough time. Let's start by fixing the most obvious layout breaks.")
+        else:
+            details.insert(0, "To be blunt: this would fail an interview because it's completely broken on mobile. Check your media queries immediately.")
+            
         out["details"] = details
 
 # For testing independently
