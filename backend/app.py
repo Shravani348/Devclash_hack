@@ -1,14 +1,14 @@
+import subprocess
+import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from analyzer import ProfileAnalyzer
-from auditor import AppAuditor
 
 app = Flask(__name__)
 CORS(app)
 
 analyzer = ProfileAnalyzer()
-auditor = AppAuditor()
 
 @app.route('/analyze', methods=['POST'])
 def analyze_profile():
@@ -46,8 +46,17 @@ def audit_app():
     
     url = data['url']
     try:
-        result = auditor.run_full_audit(url)
-        return jsonify(result)
+        # Run Playwright in an entirely isolated process to bypass asyncio threading restrictions in Flask
+        cmd = ['python', 'auditor.py', url]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # Parse the JSON output from the auditor
+        try:
+            output_json = json.loads(result.stdout.strip())
+            return jsonify(output_json)
+        except json.JSONDecodeError:
+            return jsonify({'error': f"Failed to parse auditor response. Raw output: {result.stdout}"}), 500
+    except subprocess.CalledProcessError as e:
+        return jsonify({'error': f"Auditor crashed: {e.stderr}"}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -1,5 +1,6 @@
 import re
 import time
+import asyncio
 from urllib.parse import urlparse
 import requests
 from playwright.sync_api import sync_playwright, TimeoutError
@@ -24,6 +25,9 @@ class AppAuditor:
 
         # 1. Security check (can be done with pure requests)
         self._check_security(url, results["security"])
+        
+        # FIX: Ensure a fresh event loop exists for Playwright when running inside a Flask thread
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -412,9 +416,10 @@ class AppAuditor:
             
         out["details"] = details
 
-# For testing independently
+# For testing independently or via subprocess
 if __name__ == "__main__":
     import sys
+    import json
     url = sys.argv[1] if len(sys.argv) > 1 else 'https://example.com'
     auditor = AppAuditor()
-    print(auditor.run_full_audit(url))
+    print(json.dumps(auditor.run_full_audit(url)))
