@@ -1,46 +1,51 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSignUp = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      localStorage.setItem('loggedIn', 'true');
-      navigate('/');
-    }, 800);
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+    // Simulate auth
+    localStorage.setItem('loggedIn', 'true');
+    navigate('/home');
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 bg-dot-pattern flex items-center justify-center p-6">
-      <div className="glass-panel p-10 w-full max-w-md animate-in zoom-in-95 duration-300">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
-          <p className="text-gray-400 text-sm">Join DCIS and benchmark your skills</p>
-        </div>
-
-        <form onSubmit={handleSignUp} className="space-y-5">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#0A0F1E] font-sans">
+      <div className="bg-[#111827] border border-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl">
+        <h2 className="text-3xl font-bold text-white text-center mb-8">Create Your Account</h2>
+        
+        <form onSubmit={handleSignUp} className="space-y-4">
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-300">Full Name</label>
             <input 
               type="text" 
               required
-              className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              placeholder="Aryan Sharma"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-[#1F2937] border border-gray-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+              placeholder="Enter your full name"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-300">Email Address</label>
+            <label className="text-sm font-medium text-gray-300">Email</label>
             <input 
               type="email" 
               required
-              className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              placeholder="developer@dcis.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-[#1F2937] border border-gray-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+              placeholder="Enter your email"
             />
           </div>
           
@@ -49,32 +54,38 @@ const SignUp = () => {
             <input 
               type="password" 
               required
-              className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-[#1F2937] border border-gray-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+              placeholder="Create a password"
             />
           </div>
 
-          <div className="space-y-1 pb-2">
+          <div className="space-y-1">
             <label className="text-sm font-medium text-gray-300">Confirm Password</label>
             <input 
               type="password" 
               required
-              className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full bg-[#1F2937] border border-gray-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+              placeholder="Confirm your password"
             />
           </div>
 
           <button 
             type="submit" 
-            disabled={loading}
-            className="w-full bg-primary-500 hover:bg-primary-400 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-70 shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-md transition-colors mt-4"
           >
-            {loading ? <Loader2 size={20} className="animate-spin" /> : "Create Account"}
+            Create Account
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-400">
-          Already have an account? <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">Sign In</Link>
+        <p className="mt-8 text-center text-gray-400">
+          Already have an account?{' '}
+          <Link to="/login" className="text-blue-500 hover:text-blue-400 font-medium">
+            Sign In
+          </Link>
         </p>
       </div>
     </div>
