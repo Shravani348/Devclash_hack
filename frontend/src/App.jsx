@@ -4,6 +4,8 @@ import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import DashboardHome from './pages/DashboardHome';
+import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
+import ModuleAppAuditor from './pages/ModuleAppAuditor';
 
 // Simple Auth Guard
 const RequireAuth = ({ children }) => {
@@ -25,6 +27,24 @@ function App() {
           element={
             <RequireAuth>
               <DashboardHome />
+            </RequireAuth>
+          } 
+        />
+
+        {/* Module Routes */}
+        <Route 
+          path="/github-analysis" 
+          element={
+            <RequireAuth>
+              <ModuleProfileAnalyzer />
+            </RequireAuth>
+          } 
+        />
+        <Route 
+          path="/live-app-audit" 
+          element={
+            <RequireAuth>
+              <ModuleAppAuditor />
             </RequireAuth>
           } 
         />

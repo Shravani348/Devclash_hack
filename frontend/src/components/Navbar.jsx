@@ -52,7 +52,7 @@ const Navbar = () => {
             </div>
             {/* Dropdown Menu */}
             <div className="absolute top-full left-0 w-48 bg-[#111827] border border-gray-800 rounded-lg shadow-xl opacity-0 translate-y-[-10px] invisible group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-50 overflow-hidden">
-              <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-blue-500">
+              <Link to="/github-analysis" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-blue-500">
                 Frontend
               </Link>
               <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-blue-500">
@@ -88,7 +88,7 @@ const Navbar = () => {
             </div>
             {/* Dropdown Menu */}
             <div className="absolute top-full left-0 w-48 bg-[#111827] border border-gray-800 rounded-lg shadow-xl opacity-0 translate-y-[-10px] invisible group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-50 overflow-hidden">
-              <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-rose-500">
+              <Link to="/live-app-audit" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-rose-500">
                 Frontend
               </Link>
               <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-rose-500">
