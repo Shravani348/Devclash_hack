@@ -43,7 +43,7 @@ const ModuleAppAuditor = () => {
         {!data ? (
           <AppAuditorInput onAudit={handleAudit} isAuditing={isAuditing} />
         ) : (
-          <AppAuditorDashboard results={data} onReset={() => setData(null)} />
+          <AppAuditorDashboard data={data} onReset={() => setData(null)} />
         )}
       </main>
     </div>
