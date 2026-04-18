@@ -2,11 +2,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from analyzer import ProfileAnalyzer
+from auditor import AppAuditor
 
 app = Flask(__name__)
 CORS(app)
 
 analyzer = ProfileAnalyzer()
+auditor = AppAuditor()
 
 @app.route('/analyze', methods=['POST'])
 def analyze_profile():
@@ -35,6 +37,19 @@ def analyze_profile():
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+@app.route('/audit', methods=['POST'])
+def audit_app():
+    data = request.get_json()
+    if not data or 'url' not in data:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    url = data['url']
+    try:
+        result = auditor.run_full_audit(url)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
