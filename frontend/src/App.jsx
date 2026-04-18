@@ -10,13 +10,14 @@ function App() {
     setIsLoading(true);
     // Call the local Flask backend
     try {
-      const response = await fetch('http://localhost:5000/analyze', {
+      const response = await fetch('http://localhost:8000/api/github/analyze', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Analysis failed. Is the Flask server running?');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Analysis failed. Is the Flask server running?');
       }
 
       const data = await response.json();

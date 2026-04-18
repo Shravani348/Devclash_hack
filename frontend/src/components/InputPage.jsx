@@ -1,56 +1,58 @@
 import React, { useState } from 'react';
-import { Upload, Github, Linkedin, Loader2, ArrowRight } from 'lucide-react';
+import { Github, Loader2, ArrowRight } from 'lucide-react';
 
 const InputPage = ({ onAnalyze, isLoading }) => {
   const [githubUrl, setGithubUrl] = useState('');
-  const [linkedinUrl, setLinkedinUrl] = useState('');
-  const [file, setFile] = useState(null);
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+  // ✅ FIXED USERNAME EXTRACTION (IMPORTANT)
+  const extractUsername = (url) => {
+    try {
+      if (!url || !url.includes("github.com")) return null;
+
+      let username = url.split("github.com/")[1];
+
+      if (!username) return null;
+
+      // 🔥 remove anything after username
+      username = username.split("/")[0];
+
+      return username.trim();
+    } catch {
+      return null;
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file && !githubUrl) {
-      alert("Please upload a resume or provide a GitHub URL.");
+
+    if (!githubUrl) {
+      alert("Please provide a GitHub URL.");
       return;
     }
-    
-    // In a real scenario, you'd use FormData to send the file.
+
+    const username = extractUsername(githubUrl);
+
+    if (!username) {
+      alert("Please enter a valid GitHub URL");
+      return;
+    }
+
     const formData = new FormData();
-    if (file) formData.append('resume', file);
-    formData.append('github', githubUrl);
-    formData.append('linkedin', linkedinUrl);
-    
+    formData.append("username", username);
+    if (githubUrl) formData.append("githubUrl", githubUrl);
+
     onAnalyze(formData);
   };
 
   return (
     <div className="glass-panel p-8 max-w-2xl mx-auto mt-10">
       <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-        <Upload className="text-primary-400" /> Upload Your Profile
+        <Github className="text-primary-400" /> Enter GitHub Profile
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* File Upload Area */}
-        <div className="relative border-2 border-dashed border-dark-700 rounded-xl p-8 hover:border-primary-500 transition-colors bg-dark-900/50 text-center">
-          <input 
-            type="file" 
-            accept=".pdf" 
-            onChange={handleFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-          <p className="text-sm text-gray-300">
-            {file ? <span className="text-success font-medium">{file.name}</span> : 'Drag & Drop your Resume (PDF) or click to browse'}
-          </p>
-        </div>
 
-        {/* GitHub Input */}
+        {/* GitHub */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
             <Github size={16} /> GitHub Profile URL
@@ -60,32 +62,18 @@ const InputPage = ({ onAnalyze, isLoading }) => {
             placeholder="https://github.com/username"
             value={githubUrl}
             onChange={(e) => setGithubUrl(e.target.value)}
-            className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+            className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100"
           />
         </div>
 
-        {/* LinkedIn Input */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-            <Linkedin size={16} /> LinkedIn Profile URL (Optional)
-          </label>
-          <input 
-            type="text" 
-            placeholder="https://linkedin.com/in/username"
-            value={linkedinUrl}
-            onChange={(e) => setLinkedinUrl(e.target.value)}
-            className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
-          />
-        </div>
-
-        {/* Action Button */}
+        {/* Button */}
         <button 
           type="submit" 
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-1 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg flex items-center justify-center gap-2"
         >
           {isLoading ? (
-            <><Loader2 className="animate-spin" size={20} /> Analyzing Your Profile...</>
+            <><Loader2 className="animate-spin" size={20} /> Analyzing...</>
           ) : (
             <>Start Analysis <ArrowRight size={20} /></>
           )}
