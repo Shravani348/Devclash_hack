@@ -184,6 +184,18 @@ const Dashboard = ({ data = {}, onReset }) => {
   ];
   const donutTotal = donut.reduce((s, d) => s + d.value, 0);
 
+  const handleDownload = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `github-analysis-${data.userProfile?.login || 'profile'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -293,11 +305,11 @@ const Dashboard = ({ data = {}, onReset }) => {
         </p>
       </div>
 
-      {/* ── Reset ── */}
-      <div className="flex justify-center pt-2 pb-6">
+      {/* ── Actions ── */}
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 pb-10">
         <button
           onClick={onReset}
-          className="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-medium text-gray-300 transition-all"
+          className="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-medium text-gray-300 transition-all w-full sm:w-auto justify-center"
           style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.1)',
@@ -314,6 +326,25 @@ const Dashboard = ({ data = {}, onReset }) => {
           }}
         >
           <RefreshCw size={14} /> Analyze Another Profile
+        </button>
+
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-medium text-white transition-all w-full sm:w-auto justify-center"
+          style={{
+            background: 'linear-gradient(to right, #4f46e5, #06b6d4)',
+            boxShadow: '0 4px 15px rgba(79, 70, 229, 0.3)'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(79, 70, 229, 0.4)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(79, 70, 229, 0.3)';
+          }}
+        >
+          <ExternalLink size={14} /> Download Analysis Report
         </button>
       </div>
 

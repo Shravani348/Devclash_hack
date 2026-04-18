@@ -98,12 +98,11 @@ function LeetCodeAnalyzer() {
 
 const styles = {
   bg: {
-    minHeight: "100vh",
+    minHeight: "auto",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
-    background:
-      "linear-gradient(135deg, #0f172a, #1e293b, #0f172a)",
+    alignItems: "flex-start",
+    paddingTop: "20px",
     fontFamily: "Arial",
     color: "white"
   },
