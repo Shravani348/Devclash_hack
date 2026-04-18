@@ -44,13 +44,13 @@ class AppAuditor:
                 
                 # If page fails to load
                 if not response:
-                    raise Exception("No response from server")
+                    raise Exception("No response from the target server.")
                 if response.status >= 400:
-                    raise Exception(f"Server returned HTTP {response.status}")
+                    raise Exception(f"The URL you provided is down! Its server returned an HTTP {response.status} error. Make sure the app is awake and publicly accessible.")
                 
             except Exception as e:
                 browser.close()
-                return {"error": f"Failed to load URL: {str(e)}"}
+                return {"error": f"Audit Failed: {str(e)}"}
             
             # Extract basic performance
             self._check_performance(page, start_time, results["performance"])
