@@ -1,79 +1,121 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Code, User, Brain, Globe, Sparkles } from 'lucide-react';
+import { LogOut, Code, User, Brain, Globe, Sparkles, ChevronDown } from 'lucide-react';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [userName, setUserName] = useState('Developer');
+  const [initials, setInitials] = useState('DEV');
+
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setUserName(storedName);
+      
+      // Calculate initials (e.g. "Aryan Sharma" -> "AS")
+      const nameParts = storedName.split(' ');
+      if (nameParts.length > 1) {
+        setInitials(nameParts[0].charAt(0).toUpperCase() + nameParts[nameParts.length - 1].charAt(0).toUpperCase());
+      } else {
+        setInitials(storedName.substring(0, 2).toUpperCase());
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('loggedIn');
+    localStorage.removeItem('userName');
     navigate('/');
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-dark-900/40 backdrop-blur-xl border-b border-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-      <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full bg-[#0A0F1E]/80 backdrop-blur-xl border-b border-gray-800 shadow-md">
+      <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        
         {/* Left: Logo */}
-        <Link to="/" className="flex items-center gap-3 group shrink-0 relative">
-          <div className="absolute inset-0 bg-primary-500/20 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
-          <div className="w-11 h-11 bg-gradient-to-tr from-primary-600 to-indigo-400 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 transition-all duration-300 transform group-hover:rotate-3 relative z-10 border border-white/10">
-            <Code className="text-white drop-shadow-md" size={22} strokeWidth={2.5} absoluteStrokeWidth />
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded drop-shadow">
+            <Code className="text-white" size={18} strokeWidth={2.5} />
           </div>
-          <span className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-500 group-hover:from-white group-hover:to-primary-300 transition-colors duration-300 relative z-10">DCIS<span className="text-primary-500">.</span></span>
-        </Link>
+          <span className="text-xl font-black text-gray-100 uppercase tracking-tighter cursor-default">DCIS<span className="text-blue-500">.</span></span>
+        </div>
 
-        {/* Center: Horizontal Navigation Links */}
-        <nav className="hidden lg:flex flex-1 items-center justify-center gap-2 mx-8">
-          <Link to="/github-analysis" className="flex items-center gap-2.5 px-4 py-2 rounded-full text-[14px] font-bold text-gray-400 hover:text-white transition-all hover:bg-white/5 relative group">
-            <Code size={16} className="text-primary-500 group-hover:animate-pulse" />
-            <span>Analysis</span>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-gradient-to-r from-transparent via-primary-500 to-transparent transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100"></div>
+        {/* Center: Horizontal Navigation with Dropdowns */}
+        <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+          
+          {/* GitHub Analysis with Dropdown */}
+          <div className="relative group p-4 flex items-center cursor-pointer">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-400 group-hover:text-white transition-colors">
+              <Code size={16} className="text-blue-500" />
+              <span>GitHub Analysis</span>
+              <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+            </div>
+            {/* Dropdown Menu */}
+            <div className="absolute top-full left-0 w-48 bg-[#111827] border border-gray-800 rounded-lg shadow-xl opacity-0 translate-y-[-10px] invisible group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-50 overflow-hidden">
+              <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-blue-500">
+                Frontend
+              </Link>
+              <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-blue-500">
+                Backend
+              </Link>
+            </div>
+          </div>
+
+          {/* Simple Link */}
+          <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
+            <User size={16} className="text-emerald-500" />
+            <span>Resume Audit</span>
           </Link>
-          <Link to="/" className="flex items-center gap-2.5 px-4 py-2 rounded-full text-[14px] font-bold text-gray-400 hover:text-white transition-all hover:bg-white/5 relative group">
-            <User size={16} className="text-emerald-500 group-hover:animate-pulse" />
-            <span>Audit</span>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100"></div>
+
+          {/* Simple Link */}
+          <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
+            <Brain size={16} className="text-purple-500" />
+            <span>AI / ML Insights</span>
           </Link>
-          <Link to="/" className="flex items-center gap-2.5 px-4 py-2 rounded-full text-[14px] font-bold text-gray-400 hover:text-white transition-all hover:bg-white/5 relative group">
-            <Brain size={16} className="text-purple-500 group-hover:animate-pulse" />
-            <span>Insights</span>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100"></div>
+
+          {/* Simple Link */}
+          <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
+            <Sparkles size={16} className="text-amber-500" />
+            <span>Generative AI Tools</span>
           </Link>
-          <Link to="/" className="flex items-center gap-2.5 px-4 py-2 rounded-full text-[14px] font-bold text-gray-400 hover:text-white transition-all hover:bg-white/5 relative group">
-            <Sparkles size={16} className="text-amber-500 group-hover:animate-pulse" />
-            <span>Gen AI</span>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100"></div>
-          </Link>
-          <Link to="/live-app-audit" className="flex items-center gap-2.5 px-4 py-2 rounded-full text-[14px] font-bold text-gray-400 hover:text-white transition-all hover:bg-white/5 relative group">
-            <Globe size={16} className="text-rose-500 group-hover:animate-pulse" />
-            <span>Live App</span>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-gradient-to-r from-transparent via-rose-500 to-transparent transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100"></div>
-          </Link>
+
+          {/* Live App Audit with Dropdown */}
+          <div className="relative group p-4 flex items-center cursor-pointer">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-400 group-hover:text-white transition-colors">
+              <Globe size={16} className="text-rose-500" />
+              <span>Live App Audit</span>
+              <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+            </div>
+            {/* Dropdown Menu */}
+            <div className="absolute top-full left-0 w-48 bg-[#111827] border border-gray-800 rounded-lg shadow-xl opacity-0 translate-y-[-10px] invisible group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-50 overflow-hidden">
+              <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-rose-500">
+                Frontend
+              </Link>
+              <Link to="/home" className="block px-4 py-3 text-sm text-gray-300 hover:bg-[#1F2937] hover:text-white transition-colors border-l-2 border-transparent hover:border-rose-500">
+                Backend
+              </Link>
+            </div>
+          </div>
+
         </nav>
 
-        {/* Right: Avatar & Logout */}
+        {/* Right: Auth Profile Avatar */}
         <div className="flex items-center gap-4 shrink-0">
-          <button className="hidden sm:inline-flex px-4 py-1.5 rounded-full bg-gradient-to-r from-dark-800 to-dark-700 border border-white/10 text-[13px] font-bold text-white hover:border-primary-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all">
-            Upgrade Pro
-          </button>
-          <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block"></div>
-          <div className="flex items-center gap-3 bg-dark-800/40 p-1.5 pr-2 rounded-full border border-white/5 hover:border-white/10 transition-colors">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-inner ring-2 ring-dark-900">
-              AS
+          <div className="flex items-center gap-3 bg-[#111827] border border-gray-800 pl-1.5 pr-2 py-1 rounded-full">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+              {initials}
             </div>
-            <div className="flex flex-col items-start hidden sm:flex">
-              <span className="text-[13px] font-bold text-gray-200 leading-tight">Aryan S.</span>
-              <span className="text-[10px] font-extrabold text-primary-400 uppercase tracking-wider leading-tight">Lvl 42 Dev</span>
-            </div>
+            <span className="text-sm font-semibold text-white hidden sm:block mr-2">{userName}</span>
             <button 
               onClick={handleLogout}
-              className="p-1.5 ml-1 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-full transition-all"
+              className="text-gray-400 hover:text-rose-400 transition-colors"
               title="Log Out"
             >
               <LogOut size={16} strokeWidth={2.5} />
             </button>
           </div>
         </div>
+
       </div>
     </header>
   );

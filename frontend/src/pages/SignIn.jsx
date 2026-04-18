@@ -11,7 +11,7 @@ const SignIn = () => {
     setLoading(true);
     setTimeout(() => {
       localStorage.setItem('loggedIn', 'true');
-      navigate('/');
+      navigate('/home');
     }, 800);
   };
 

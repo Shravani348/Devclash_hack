@@ -5,13 +5,21 @@ import { Loader2 } from 'lucide-react';
 const SignUp = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSignUp = (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
     setLoading(true);
     setTimeout(() => {
       localStorage.setItem('loggedIn', 'true');
-      navigate('/');
+      localStorage.setItem('userName', fullName);
+      navigate('/home');
     }, 800);
   };
 

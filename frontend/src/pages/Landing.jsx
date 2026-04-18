@@ -1,13 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Github, Sparkles, Map, ChevronRight } from 'lucide-react';
-import Navbar from '../components/Navbar';
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-dark-900 overflow-hidden font-sans relative selection:bg-primary-500/30">
-      <Navbar />
       
+
       {/* Dynamic Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-600/30 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[8000ms]"></div>
