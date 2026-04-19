@@ -140,6 +140,26 @@ const ResumeAuditResult = ({ data, onReset }) => {
              <Award size={120} className="text-amber-500" />
           </div>
           
+          {/* AI Role Assignment Card */}
+          <div className="mb-10 p-6 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex flex-col md:flex-row items-center justify-between gap-6 animate-in zoom-in duration-500">
+             <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
+                   <Sparkles className="text-white" size={32} />
+                </div>
+                <div>
+                   <h4 className="text-xs font-black text-primary-400 uppercase tracking-widest mb-1">AI Suggested Role</h4>
+                   <h3 className="text-3xl font-black text-white">{data.suggestedRole}</h3>
+                </div>
+             </div>
+             <div className="flex flex-wrap gap-2 justify-center">
+                {data.suitableRoles?.map((r, i) => (
+                   <span key={i} className="px-3 py-1 rounded-full bg-dark-900 border border-white/5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Suitable: {r}
+                   </span>
+                ))}
+             </div>
+          </div>
+
           <div className="flex flex-col lg:flex-row items-center gap-12 relative z-10">
             {/* Ring Score */}
             <div className="relative w-48 h-48 shrink-0">

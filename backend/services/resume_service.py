@@ -17,80 +17,88 @@ def extract_text(pdf_path):
     return text
 
 def audit_resume(pdf_path, jd=""):
-    # resume_text = extract_text(pdf_path) # We still extract it to be realistic
+    resume_text = extract_text(pdf_path).lower()
     
-    # Returning a high-quality Mock response to allow the user to demo without API errors
+    # Simple keyword-based 'AI' role detection (Free & Dynamic)
+    role = "Software Engineer"
+    suitable_roles = ["Junior Developer", "Systems Analyst"]
+    if "react" in resume_text or "frontend" in resume_text or "javascript" in resume_text:
+        role = "Frontend Engineer"
+        suitable_roles = ["React Developer", "UI Architect", "Web Developer"]
+    elif "node" in resume_text or "python" in resume_text or "backend" in resume_text:
+        role = "Backend Engineer"
+        suitable_roles = ["API Developer", "Database Administrator", "DevOps Engineer"]
+    if "node" in resume_text and "react" in resume_text:
+        role = "Full Stack Engineer"
+        suitable_roles = ["Product Engineer", "Technical Lead", "CTO Track"]
+
+    # Enhanced Mock response based on detected role
     mock_response = {
-      "score": 78,
-      "suggestionsCount": 12,
+      "score": 82,
+      "suggestedRole": role,
+      "suitableRoles": suitable_roles,
+      "suggestionsCount": 10,
       "categories": {
-        "content": { "score": 8, "suggestions": 3 },
-        "skills": { "score": 6, "suggestions": 5 },
-        "format": { "score": 9, "suggestions": 0 },
-        "sections": { "score": 7, "suggestions": 2 },
-        "style": { "score": 8, "suggestions": 2 }
+        "content": { "score": 9, "suggestions": 2 },
+        "skills": { "score": 7, "suggestions": 4 },
+        "format": { "score": 10, "suggestions": 0 },
+        "sections": { "score": 8, "suggestions": 2 },
+        "style": { "score": 7, "suggestions": 2 }
       },
       "overview": {
-        "summary": "Your resume shows strong technical foundations but lacks quantified impact in several key projects. Your formatting is excellent and ATS-friendly.",
+        "summary": f"Based on your profile, you are a strong match for a {role} role. Your resume is well-structured and uses modern technical terminology, but could benefit from more specific leadership metrics.",
         "radarData": [
-          { "subject": "Content", "A": 8, "fullMark": 10 },
-          { "subject": "Skills", "A": 6, "fullMark": 10 },
-          { "subject": "Format", "A": 9, "fullMark": 10 },
-          { "subject": "Sections", "A": 7, "fullMark": 10 },
-          { "subject": "Style", "A": 8, "fullMark": 10 }
+          { "subject": "Content", "A": 9, "fullMark": 10 },
+          { "subject": "Skills", "A": 7, "fullMark": 10 },
+          { "subject": "Format", "A": 10, "fullMark": 10 },
+          { "subject": "Sections", "A": 8, "fullMark": 10 },
+          { "subject": "Style", "A": 7, "fullMark": 10 }
         ],
-        "highlights": ["Single-column ATS friendly layout", "Strong technical stack listed", "Clear education and experience sections"],
-        "improvements": ["Add more metrics to project descriptions", "Include a link to your portfolio/GitHub", "Specify version numbers for key frameworks"]
+        "highlights": [f"Deep expertise in {role} fundamentals", "Perfect single-column format", "Clear section hierarchy"],
+        "improvements": [f"Add certifications relevant to {suitable_roles[0]}", "Quantify the scale of the users you served", "Link your most impressive GitHub project"]
       },
       "content": {
         "measurableResults": {
           "count": 2,
-          "flagged": ["Worked on the frontend of a banking application", "Collaborated with team to fix bugs"]
+          "flagged": ["Responsible for the core system architecture", "Assisted in the deployment of new features"]
         },
         "spellingGrammar": {
           "errors": [
-            { "original": "Responsible for devloping features", "error": "devloping", "fix": "developing", "explanation": "Typo in core responsibility" }
+            { "original": "Expereince with cloud services", "error": "Expereince", "fix": "Experience", "explanation": "Common spelling error" }
           ]
         }
       },
       "skills": {
         "hardSkills": [
-          { "name": "React", "required": 1, "found": 1, "status": "found" },
-          { "name": "Node.js", "required": 1, "found": 1, "status": "found" },
-          { "name": "AWS", "required": 1, "found": 0, "status": "missing" },
-          { "name": "Docker", "required": 1, "found": 0, "status": "missing" }
+          { "name": "Technical Stack", "required": 1, "found": 1, "status": "found" },
+          { "name": "System Design", "required": 1, "found": 0, "status": "missing" }
         ],
         "softSkills": [
-           { "name": "Leadership", "required": 1, "found": 1, "status": "found" },
-           { "name": "Agile", "required": 1, "found": 0, "status": "missing" }
+           { "name": "Communication", "required": 1, "found": 1, "status": "found" },
+           { "name": "Problem Solving", "required": 1, "found": 1, "status": "found" }
         ]
       },
       "format": {
-        "dateFormatting": { "status": "PASS", "text": "All dates follow the Month YYYY standard." },
-        "resumeLength": { "status": "PASS", "text": "One-page format is perfect for your experience level." },
-        "bulletPoints": { "status": "PASS", "text": "Consistent bullet point usage across all sections." }
+        "dateFormatting": { "status": "PASS", "text": "Dates are consistent and professional." },
+        "resumeLength": { "status": "PASS", "text": "Length is optimal for readability." },
+        "bulletPoints": { "status": "PASS", "text": "Excellent use of bullet points." }
       },
       "sections": {
         "checklist": [
-          { "label": "Name", "status": "PASS", "value": "Shravani Paralkar" },
-          { "label": "Job Title", "status": "PASS", "value": "Full Stack Developer" },
-          { "label": "Phone Number", "status": "PASS", "value": "Present" },
-          { "label": "Email Address", "status": "PASS", "value": "Present" },
+          { "label": "Name", "status": "PASS", "value": "Detected" },
           { "label": "Portfolio Link", "status": "FAIL", "value": "Missing" },
           { "label": "Summary", "status": "PASS" },
           { "label": "Experience", "status": "PASS" },
-          { "label": "Education", "status": "PASS" },
-          { "label": "Hard Skills", "status": "PASS" },
-          { "label": "Soft Skills", "status": "PASS" }
+          { "label": "Education", "status": "PASS" }
         ]
       },
       "style": {
         "voice": {
-          "tags": ["#Professional", "#Informative"],
-          "flagged": [ { "original": "I was in charge of the database", "suggestion": "Architected and managed the core database schema" } ]
+          "tags": ["#Professional", "#Direct"],
+          "flagged": [ { "original": "I am a hard worker", "suggestion": "Consistently delivered high-quality features ahead of schedule" } ]
         },
         "buzzwords": [
-          { "phrase": "Team Player", "sentence": "I am a motivated team player", "suggestion": "Collaborative Engineer" }
+          { "phrase": "Ninja", "sentence": "I am a coding ninja", "suggestion": "Senior Software Engineer" }
         ]
       }
     }
