@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { pushDashboardSummary } from "../utils/dashboardUtils";
 
 const API_BASE = "http://localhost:8000";
 
@@ -88,7 +89,16 @@ export default function LeetCodeAnalyzer() {
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error || `Server error ${res.status}`); return; }
-      setData(json.data || json); // Support both nested 'data' and flat response
+      const finalData = json.data || json;
+      setData(finalData); // Support both nested 'data' and flat response
+
+      // Push summary to dashboard
+      pushDashboardSummary({
+        type: 'leetcode',
+        title: 'LeetCode Intelligence',
+        mainStat: `${finalData.problemsSolved?.total || 0} Solved`,
+        insight: `Performance level: ${skillLabel(finalData.skillScore || 0).text}. Ranking: #${finalData.ranking || 'N/A'}.`
+      });
     } catch(err) {
       setError(`Network error: ${err.message}. Make sure the backend is running on port 8000.`);
     } finally {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import ResumeAuditInput from '../components/ResumeAuditInput';
 import ResumeAuditResult from '../components/ResumeAuditResult';
+import { pushDashboardSummary } from '../utils/dashboardUtils';
 
 const ModuleResumeAudit = () => {
   const [data, setData] = useState(null);
@@ -24,6 +25,14 @@ const ModuleResumeAudit = () => {
 
       const result = await response.json();
       setData(result);
+
+      // Push summary to dashboard
+      pushDashboardSummary({
+        type: 'resume',
+        title: 'Resume AI Audit',
+        mainStat: `Score: ${result.matchScore || 0}%`,
+        insight: result.overallSummary?.substring(0, 100) + '...' || 'Resume audit complete.'
+      });
     } catch (err) {
       console.error(err);
       setError(err.message || 'Something went wrong. Please check your connection and try again.');
@@ -33,7 +42,7 @@ const ModuleResumeAudit = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080C18] text-gray-100 selection:bg-primary-500/30">
+    <div className="min-h-screen bg-transparent font-sans relative selection:bg-emerald-500/30">
       <Navbar />
       
       {/* Background Ambience */}

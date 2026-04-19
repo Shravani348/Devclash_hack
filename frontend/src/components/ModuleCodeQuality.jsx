@@ -5,6 +5,7 @@ import {
   Target, BarChart3, AlertTriangle, Sparkles, RefreshCcw,
   Loader2
 } from 'lucide-react';
+import { pushDashboardSummary } from '../utils/dashboardUtils';
 
 const ModuleCodeQuality = () => {
   const [username, setUsername] = useState('');
@@ -27,6 +28,14 @@ const ModuleCodeQuality = () => {
       const result = await response.json();
       if (result.error) throw new Error(result.error);
       setData(result);
+
+      // Push summary to dashboard
+      pushDashboardSummary({
+        type: 'app-backend',
+        title: 'Backend Quality Audit',
+        mainStat: `Score: ${result.average_score || 0}%`,
+        insight: `Technical level: ${result.level}. ${result.final_verdict}`
+      });
     } catch (err) {
       setError(err.message);
     } finally {

@@ -4,7 +4,7 @@ import LeetCodeAnalyzer from '../components/LeetCodeAnalyzer';
 
 const ModuleLeetCode = () => {
   return (
-    <div className="min-h-screen bg-[#0A0F1E] font-sans relative selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-transparent font-sans relative selection:bg-blue-500/30 overflow-x-hidden">
       <Navbar />
       
       {/* Background Ambience */}

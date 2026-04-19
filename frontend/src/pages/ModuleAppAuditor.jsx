@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import AppAuditorInput from '../components/AppAuditorInput';
 import AppAuditorDashboard from '../components/AppAuditorDashboard';
 import ModuleCodeQuality from '../components/ModuleCodeQuality';
+import { pushDashboardSummary } from '../utils/dashboardUtils';
 import { Globe, Shield, Terminal } from 'lucide-react';
 
 const ModuleAppAuditor = () => {
@@ -23,6 +24,14 @@ const ModuleAppAuditor = () => {
         alert(result.error);
       } else {
         setFrontendData(result);
+        
+        // Push summary to dashboard
+        pushDashboardSummary({
+          type: 'app-frontend',
+          title: 'Frontend App Audit',
+          mainStat: `Score: ${result.overallScore || 0}%`,
+          insight: `Performance: ${result.performance?.score || 0}. Security: ${result.security?.score || 0}.`
+        });
       }
     } catch (error) {
       console.error(error);
@@ -32,7 +41,7 @@ const ModuleAppAuditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] overflow-x-hidden font-sans relative selection:bg-primary-500/30">
+    <div className="min-h-screen bg-transparent overflow-x-hidden font-sans relative selection:bg-primary-500/30">
       <Navbar />
       
       {/* Background Ambience */}

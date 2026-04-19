@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import InputPage from '../components/InputPage';
 import Dashboard from '../components/Dashboard';
+import { pushDashboardSummary } from '../utils/dashboardUtils';
 
 const ModuleProfileAnalyzer = () => {
   const [data, setData] = useState(null);
@@ -22,6 +23,14 @@ const ModuleProfileAnalyzer = () => {
 
       const result = await response.json();
       setData(result);
+      
+      // Push summary to dashboard
+      pushDashboardSummary({
+        type: 'github',
+        title: 'GitHub Intelligence',
+        mainStat: `Score: ${result.githubAnalysis?.repos || 0} Repos`,
+        insight: result.aiExplanation?.substring(0, 100) + '...' || 'Profile analysis complete.'
+      });
     } catch (error) {
       console.error(error);
       alert(error.message || 'Analysis failed. Make sure Flask is running on 8000.');
@@ -30,7 +39,7 @@ const ModuleProfileAnalyzer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] overflow-hidden font-sans relative selection:bg-blue-500/30">
+    <div className="min-h-screen bg-transparent relative overflow-hidden selection:bg-primary-500/30">
       <Navbar />
       
       {/* Background Ambience tailored for Analysis */}

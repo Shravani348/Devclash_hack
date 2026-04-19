@@ -4,25 +4,79 @@
 
 @layer base {
   body {
-    @apply bg-dark-900 text-gray-100 font-sans antialiased;
+    @apply bg-[#F8FAFC] dark:bg-[#080C18] text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors duration-500;
   }
 }
 
-.glass-panel {
-  @apply bg-dark-800/60 backdrop-blur-md border border-dark-700/50 rounded-2xl shadow-xl;
+.glass-card {
+  @apply bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/30 rounded-3xl shadow-2xl shadow-slate-200/20 dark:shadow-none transition-all duration-300;
 }
 
-.gradient-text {
-  @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400;
+.glass-card:hover {
+  @apply border-primary-500/30 dark:border-primary-400/20 bg-white/80 dark:bg-slate-900/50;
 }
 
-.progress-ring__circle {
-  transition: stroke-dashoffset 0.5s ease-in-out;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
+.text-gradient {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600 dark:from-primary-400 dark:to-indigo-400;
+}
+
+.btn-primary {
+  @apply px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-600/20 active:scale-95;
+}
+
+.border-glow {
+  @apply relative;
+}
+
+.border-glow::after {
+  content: "";
+  @apply absolute inset-0 rounded-[inherit] border border-primary-500/20 pointer-events-none;
+}
+
+.dark .border-glow:hover::after {
+  @apply border-primary-400/50 shadow-[0_0_15px_rgba(59,130,246,0.3)];
+  transition: all 0.5s ease;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-800 rounded-full;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
 .bg-dot-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
