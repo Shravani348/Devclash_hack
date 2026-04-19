@@ -6,6 +6,7 @@ import SignUp from './pages/SignUp';
 import DashboardHome from './pages/DashboardHome';
 import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
 import ModuleAppAuditor from './pages/ModuleAppAuditor';
+import ModuleLeetCode from './pages/ModuleLeetCode';
 
 // Simple Auth Guard
 const RequireAuth = ({ children }) => {
@@ -45,6 +46,14 @@ function App() {
           element={
             <RequireAuth>
               <ModuleAppAuditor />
+            </RequireAuth>
+          } 
+        />
+        <Route 
+          path="/leetcode-analysis" 
+          element={
+            <RequireAuth>
+              <ModuleLeetCode />
             </RequireAuth>
           } 
         />

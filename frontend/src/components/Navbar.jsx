@@ -67,10 +67,10 @@ const Navbar = () => {
             <span>Resume Audit</span>
           </Link>
 
-          {/* Simple Link */}
-          <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
+          {/* LeetCode Analysis Link */}
+          <Link to="/leetcode-analysis" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
             <Brain size={16} className="text-purple-500" />
-            <span>AI / ML Insights</span>
+            <span>LeetCode Analysis</span>
           </Link>
 
           {/* Simple Link */}
