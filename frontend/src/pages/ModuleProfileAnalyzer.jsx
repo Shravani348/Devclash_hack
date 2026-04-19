@@ -10,7 +10,6 @@ const ModuleProfileAnalyzer = () => {
   const handleAnalyze = async (formData) => {
     setIsLoading(true);
     try {
-<<<<<<< HEAD
       const response = await fetch('http://localhost:8000/api/github/analyze', {
         method: 'POST',
         body: formData,
@@ -26,21 +25,6 @@ const ModuleProfileAnalyzer = () => {
     } catch (error) {
       console.error(error);
       alert(error.message || 'Analysis failed. Make sure Flask is running on 8000.');
-=======
-      const response = await fetch('http://127.0.0.1:5000/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      if (result.error) {
-        alert(result.error);
-      } else {
-        setData(result);
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Analysis failed. Make sure backend is running on 5000.');
->>>>>>> origin/main
     }
     setIsLoading(false);
   };
