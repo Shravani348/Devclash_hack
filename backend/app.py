@@ -6,6 +6,7 @@ from flask_cors import CORS
 from routes.github_routes import github_bp
 from analyzer import ProfileAnalyzer
 from resume_llm_auditor import LLMResumeAuditor
+from services.code_quality_service import audit_github_user
 
 app = Flask(__name__)
 CORS(app)
@@ -116,6 +117,16 @@ def leetcode_analyze():
         }
     }
     return jsonify({'success': True, 'data': dummy_response})
+
+@app.route('/api/code/analyze', methods=['POST'])
+def code_analyze():
+    data = request.get_json()
+    username = data.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+    
+    result = audit_github_user(username)
+    return jsonify(result)
 
 if __name__ == "__main__":
     # Unified Backend on Port 8000

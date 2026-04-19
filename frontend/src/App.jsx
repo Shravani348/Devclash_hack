@@ -8,7 +8,6 @@ import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
 import ModuleAppAuditor from './pages/ModuleAppAuditor';
 import ModuleResumeAudit from './pages/ModuleResumeAudit';
 import ModuleLeetCode from './pages/ModuleLeetCode';
-import Navbar from './components/Navbar';
 
 // Simple Auth Guard
 const RequireAuth = ({ children }) => {
