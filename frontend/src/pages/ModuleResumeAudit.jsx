@@ -1,58 +1,58 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
-import ResumeUploadInput from '../components/ResumeUploadInput';
-import ResumeAuditReport from '../components/ResumeAuditReport';
+import ResumeAuditInput from '../components/ResumeAuditInput';
+import ResumeAuditResult from '../components/ResumeAuditResult';
 
 const ModuleResumeAudit = () => {
-  const [auditData, setAuditData] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleAnalyze = async (formData) => {
-    setIsAnalyzing(true);
+    setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/resume/audit', {
+      const response = await fetch('http://localhost:8000/api/resume/audit', {
         method: 'POST',
         body: formData,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to analyze resume. Check backend connection.');
-      }
-
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error);
-      }
       
-      setAuditData(data);
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to analyze resume');
+      }
+
+      const result = await response.json();
+      setData(result);
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError(err.message || 'Something went wrong. Please check your connection and try again.');
     } finally {
-      setIsAnalyzing(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#080C18] font-sans relative overflow-x-hidden selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#080C18] text-gray-100 selection:bg-primary-500/30">
       <Navbar />
+      
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] mix-blend-screen"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[35%] h-[35%] bg-purple-600/10 rounded-full blur-[120px] mix-blend-screen"></div>
+      </div>
 
-      {/* Decorative dark background lighting */}
-      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#111827] to-transparent pointer-events-none z-0"></div>
-
-      <main className="relative z-10 w-full pt-10 px-6">
+      <main className="container mx-auto px-6 pt-10 pb-20 relative z-10">
         {error && (
-           <div className="max-w-3xl mx-auto bg-rose-500/10 border border-rose-500/50 text-rose-400 p-4 rounded-xl mb-6 text-center">
-             {error}
-           </div>
+          <div className="max-w-2xl mx-auto mb-8 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-center text-sm">
+             ⚠️ {error}
+          </div>
         )}
 
-        {!auditData ? (
-          <ResumeUploadInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
+        {!data ? (
+          <ResumeAuditInput onAnalyze={handleAnalyze} isLoading={isLoading} />
         ) : (
-          <ResumeAuditReport data={auditData} />
+          <ResumeAuditResult data={data} onReset={() => setData(null)} />
         )}
       </main>
     </div>

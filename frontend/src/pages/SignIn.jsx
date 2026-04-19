@@ -4,6 +4,7 @@ import { Github, Loader2 } from 'lucide-react';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = (e) => {
@@ -11,6 +12,7 @@ const SignIn = () => {
     setLoading(true);
     setTimeout(() => {
       localStorage.setItem('loggedIn', 'true');
+      localStorage.setItem('userName', email.split('@')[0]); // Use part of email as name
       navigate('/home');
     }, 800);
   };
@@ -42,6 +44,8 @@ const SignIn = () => {
             <input 
               type="email" 
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
               placeholder="developer@DCIS.com"
             />

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
-const API_BASE = (typeof import.meta !== "undefined" && import.meta.env?.VITE_NODE_API)
-  || "http://localhost:5001";
+const API_BASE = "http://localhost:8000";
 
 function skillLabel(score) {
   if (score >= 80) return { text: "Expert",       color: "#a78bfa" };
@@ -75,13 +74,11 @@ export default function LeetCodeAnalyzer() {
   const [loading,  setLoading]  = useState(false);
   const [data,     setData]     = useState(null);
   const [error,    setError]    = useState("");
-  const [apiLog,   setApiLog]   = useState("");
 
   const analyze = async () => {
     const u = username.trim();
     if (!u) { setError("Please enter a LeetCode username."); return; }
     setLoading(true); setError(""); setData(null);
-    setApiLog(`Calling: ${API_BASE}/api/leetcode/analyze`);
 
     try {
       const res  = await fetch(`${API_BASE}/api/leetcode/analyze`, {
@@ -90,24 +87,22 @@ export default function LeetCodeAnalyzer() {
         body: JSON.stringify({ username: u }),
       });
       const json = await res.json();
-      setApiLog(`HTTP ${res.status} — keys: ${Object.keys(json).join(", ")}`);
       if (!res.ok) { setError(json.error || `Server error ${res.status}`); return; }
-      setData(json);
+      setData(json.data || json); // Support both nested 'data' and flat response
     } catch(err) {
-      setError(`Network error: ${err.message}. Make sure Node backend is running on port 5001.`);
-      setApiLog(`Fetch threw: ${err.message}`);
+      setError(`Network error: ${err.message}. Make sure the backend is running on port 8000.`);
     } finally {
       setLoading(false);
     }
   };
 
-  const level = data ? skillLabel(data.skillScore) : null;
+  const level = data ? skillLabel(data.skillScore || 0) : null;
   const total = data?.problemsSolved?.total || 0;
 
   return (
-    <div style={{ minHeight:"100vh",
-      background:"linear-gradient(135deg,#0f1117 0%,#1a1f2e 50%,#0f1117 100%)",
-      fontFamily:"'Segoe UI',system-ui,sans-serif", color:"#f3f4f6", padding:"40px 16px" }}>
+    <div style={{ minHeight:"auto",
+      background:"transparent",
+      fontFamily:"'Segoe UI',system-ui,sans-serif", color:"#f3f4f6", padding:"20px 16px" }}>
       <div style={{ maxWidth:720, margin:"0 auto" }}>
 
         {/* ── Header ── */}
@@ -148,15 +143,6 @@ export default function LeetCodeAnalyzer() {
           </button>
         </div>
 
-        {/* ── Debug log ── */}
-        {apiLog && (
-          <div style={{ fontSize:11, color:"#4b5563", marginBottom:12,
-            padding:"6px 12px", background:"rgba(0,0,0,.3)",
-            borderRadius:8, fontFamily:"monospace" }}>
-            {apiLog}
-          </div>
-        )}
-
         {/* ── Error ── */}
         {error && (
           <div style={{ background:"rgba(239,68,68,.12)",
@@ -164,33 +150,27 @@ export default function LeetCodeAnalyzer() {
             borderRadius:12, padding:"14px 18px", marginBottom:20,
             color:"#fca5a5", fontSize:14, lineHeight:1.5 }}>
             <strong>Error:</strong> {error}
-            <div style={{ marginTop:8, fontSize:12, color:"#9ca3af" }}>
-              Check: ① Node backend running? (node server.js)
-              ② Port 5001? ③ Username spelled correctly?
-            </div>
           </div>
         )}
 
         {/* ── Loading ── */}
         {loading && (
           <div style={{ textAlign:"center", padding:"60px 0", color:"#4b5563" }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>⟳</div>
+            <div style={{ fontSize:32, marginBottom:12 }} className="animate-spin">⟳</div>
             Fetching from LeetCode…
           </div>
         )}
 
-        {/* ══════════════════════════════════
-            RESULTS — renders when data exists
-        ══════════════════════════════════ */}
+        {/* RESULTS */}
         {data && !loading && (
-          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Profile card */}
             <div style={{ background:"rgba(255,255,255,.04)",
               border:"1px solid rgba(255,255,255,.08)",
               borderRadius:16, padding:"24px 28px",
               display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
-              <Ring value={data.skillScore} color={level.color} size={96} label="Skill score"/>
+              <Ring value={data.skillScore || 0} color={level.color} size={96} label="Skill score"/>
               <div style={{ flex:1, minWidth:160 }}>
                 <div style={{ fontSize:22, fontWeight:700, color:"#fff" }}>
                   {data.displayName || data.username}
@@ -202,11 +182,6 @@ export default function LeetCodeAnalyzer() {
                   padding:"4px 12px", borderRadius:99 }}>
                   {level.text}
                 </span>
-                {data.country && (
-                  <div style={{ fontSize:12, color:"#6b7280", marginTop:6 }}>
-                    {data.country}
-                  </div>
-                )}
               </div>
               {data.ranking && (
                 <div style={{ textAlign:"right" }}>
@@ -249,80 +224,10 @@ export default function LeetCodeAnalyzer() {
               <Tile label="Acceptance rate"
                 value={`${data.acceptanceRate ?? "—"}%`} accent="#34d399"/>
               <Tile label="Day streak"
-                value={fmtNum(data.streak)}              accent="#f59e0b"/>
+                value={fmtNum(data.streak || 0)}              accent="#f59e0b"/>
               <Tile label="Active days"
-                value={fmtNum(data.activeDays)}          accent="#6366f1"/>
-              {data.badges?.length > 0 && (
-                <Tile label="Badges" value={data.badges.length} accent="#a78bfa"/>
-              )}
+                value={fmtNum(data.activeDays || 0)}          accent="#6366f1"/>
             </div>
-
-            {/* Contest */}
-            {data.contest && (
-              <div style={{ background:"rgba(255,255,255,.04)",
-                border:"1px solid rgba(255,255,255,.08)",
-                borderRadius:16, padding:"24px 28px" }}>
-                <div style={{ fontSize:12, color:"#6b7280", fontWeight:600,
-                  letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:16 }}>
-                  Contest Performance
-                </div>
-                <div style={{ display:"grid",
-                  gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:12 }}>
-                  <Tile label="Contest rating"
-                    value={fmtNum(data.contest.rating)}              accent="#f59e0b"/>
-                  <Tile label="Global rank"
-                    value={`#${fmtNum(data.contest.globalRanking)}`} accent="#6366f1"/>
-                  <Tile label="Top percentile"
-                    value={`${data.contest.topPercentage}%`}         accent="#34d399"/>
-                  <Tile label="Contests joined"
-                    value={data.contest.attended}                    accent="#a78bfa"/>
-                </div>
-              </div>
-            )}
-
-            {/* Skill tags */}
-            {data.skills?.length > 0 && (
-              <div style={{ background:"rgba(255,255,255,.04)",
-                border:"1px solid rgba(255,255,255,.08)",
-                borderRadius:16, padding:"24px 28px" }}>
-                <div style={{ fontSize:12, color:"#6b7280", fontWeight:600,
-                  letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:14 }}>
-                  Skill Tags
-                </div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                  {data.skills.map(s => (
-                    <span key={s} style={{ background:"rgba(99,102,241,.15)",
-                      border:"1px solid rgba(99,102,241,.3)",
-                      color:"#a5b4fc", fontSize:12,
-                      padding:"5px 12px", borderRadius:99 }}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Badges */}
-            {data.badges?.length > 0 && (
-              <div style={{ background:"rgba(255,255,255,.04)",
-                border:"1px solid rgba(255,255,255,.08)",
-                borderRadius:16, padding:"24px 28px" }}>
-                <div style={{ fontSize:12, color:"#6b7280", fontWeight:600,
-                  letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:14 }}>
-                  Badges ({data.badges.length})
-                </div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                  {data.badges.map(b => (
-                    <span key={b} style={{ background:"rgba(251,191,36,.1)",
-                      border:"1px solid rgba(251,191,36,.25)",
-                      color:"#fde68a", fontSize:12,
-                      padding:"5px 12px", borderRadius:99 }}>
-                      🏅 {b}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
 
           </div>
         )}
@@ -339,6 +244,8 @@ export default function LeetCodeAnalyzer() {
       <style>{`
         input::placeholder { color: #4b5563; }
         * { box-sizing: border-box; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

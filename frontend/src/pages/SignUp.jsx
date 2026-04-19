@@ -37,6 +37,8 @@ const SignUp = () => {
             <input 
               type="text" 
               required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
               placeholder="Aryan Sharma"
             />
@@ -57,6 +59,8 @@ const SignUp = () => {
             <input 
               type="password" 
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
               placeholder="••••••••"
             />
@@ -67,6 +71,8 @@ const SignUp = () => {
             <input 
               type="password" 
               required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
               placeholder="••••••••"
             />

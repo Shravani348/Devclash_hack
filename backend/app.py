@@ -1,17 +1,24 @@
+import os
 import subprocess
 import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
+from routes.github_routes import github_bp
 from analyzer import ProfileAnalyzer
 from resume_llm_auditor import LLMResumeAuditor
+from services.code_quality_service import audit_github_user
 
 app = Flask(__name__)
 CORS(app)
 
+# Register GitHub Analysis Blueprint (Port 8000 logic)
+app.register_blueprint(github_bp, url_prefix="/api/github")
+
+# Global Analyzers
 analyzer = ProfileAnalyzer()
 llm_auditor = LLMResumeAuditor()
 
+# Resume-based simple analysis (Legacy/Teammate)
 @app.route('/analyze', methods=['POST'])
 def analyze_profile():
     if 'resume' not in request.files:
@@ -26,13 +33,13 @@ def analyze_profile():
     if not file.filename.endswith('.pdf'):
         return jsonify({'error': 'Please upload a PDF file'}), 400
 
-    # Save temp file
-    temp_path = os.path.join('/tmp' if os.name != 'nt' else os.environ.get('TEMP', './'), file.filename)
+    temp_dir = '/tmp' if os.name != 'nt' else os.environ.get('TEMP', './')
+    temp_path = os.path.join(temp_dir, file.filename)
     file.save(temp_path)
 
     try:
-        # Run local model analysis
-        result = analyzer.analyze(temp_path, github_url)
+        from analyzer import analyze
+        result = analyze(temp_path, github_url)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -40,6 +47,35 @@ def analyze_profile():
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
+# Module 3 - Complex AI Resume Audit
+@app.route('/api/resume/audit', methods=['POST'])
+def resume_audit():
+    if 'resume' not in request.files:
+        return jsonify({'error': 'No resume file provided'}), 400
+    
+    file = request.files['resume']
+    jd = request.form.get('jd', '')
+    
+    if file.filename == '' or not file.filename.endswith('.pdf'):
+        return jsonify({'error': 'Please upload a valid PDF file'}), 400
+
+    temp_path = os.path.join('/tmp' if os.name != 'nt' else os.environ.get('TEMP', './'), file.filename)
+    file.save(temp_path)
+
+    try:
+        # We use our integrated resume_service which matches our UI requirements
+        from services.resume_service import audit_resume
+        result = audit_resume(temp_path, jd)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+# Live App Auditor Route
 @app.route('/audit', methods=['POST'])
 def audit_app():
     data = request.get_json()
@@ -48,10 +84,9 @@ def audit_app():
     
     url = data['url']
     try:
-        # Run Playwright in an entirely isolated process to bypass asyncio threading restrictions in Flask
+        # Run Playwright in an entirely isolated process
         cmd = ['python', 'auditor.py', url]
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        # Parse the JSON output from the auditor
         try:
             output_json = json.loads(result.stdout.strip())
             return jsonify(output_json)
@@ -62,33 +97,37 @@ def audit_app():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/resume/audit', methods=['POST'])
-def api_resume_audit():
-    # Only need to check if file is sent if we were parsing it, but we can accept JD too.
-    if 'resume' not in request.files:
-        return jsonify({'error': 'No resume file provided'}), 400
-        
-    file = request.files['resume']
-    jd_text = request.form.get('jd', '')
+# LeetCode Analysis Unified Route
+@app.route('/api/leetcode/analyze', methods=['POST'])
+def leetcode_analyze():
+    data = request.get_json()
+    username = data.get('username', 'Unknown')
     
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+    # Dummy logic matching the original Node.js implementation
+    dummy_response = {
+        'username': username,
+        'level': "Intermediate",
+        'ranking': 12345,
+        'skillScore': 75,
+        'problemsSolved': {
+            'easy': 120,
+            'medium': 80,
+            'hard': 25,
+            'total': 225
+        }
+    }
+    return jsonify({'success': True, 'data': dummy_response})
 
-    if not file.filename.endswith('.pdf') and not file.filename.endswith('.docx'):
-        return jsonify({'error': 'Please upload a PDF or DOCX file'}), 400
+@app.route('/api/code/analyze', methods=['POST'])
+def code_analyze():
+    data = request.get_json()
+    username = data.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+    
+    result = audit_github_user(username)
+    return jsonify(result)
 
-    temp_path = os.path.join('/tmp' if os.name != 'nt' else os.environ.get('TEMP', './'), file.filename)
-    file.save(temp_path)
-
-    try:
-        # Extract and analyze using our LLM Auditor Logic
-        result = llm_auditor.extract_and_analyze(temp_path, jd_text)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+if __name__ == "__main__":
+    # Unified Backend on Port 8000
+    app.run(debug=True, port=8000)
