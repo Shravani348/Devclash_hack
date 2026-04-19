@@ -7,7 +7,7 @@ import DashboardHome from './pages/DashboardHome';
 import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
 import ModuleAppAuditor from './pages/ModuleAppAuditor';
 import ModuleResumeAudit from './pages/ModuleResumeAudit';
-import LeetCodeAnalyzer from './components/LeetCodeAnalyzer';
+import ModuleLeetCode from './pages/ModuleLeetCode';
 import Navbar from './components/Navbar';
 
 // Simple Auth Guard
@@ -48,12 +48,7 @@ function App() {
           path="/leetcode-analysis" 
           element={
             <RequireAuth>
-              <div className="min-h-screen bg-[#0A0F1E]">
-                <Navbar />
-                <div className="py-10">
-                  <LeetCodeAnalyzer />
-                </div>
-              </div>
+              <ModuleLeetCode />
             </RequireAuth>
           } 
         />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Code, User, Brain, Globe, Sparkles, ChevronDown } from 'lucide-react';
+import { LogOut, Code, User, Brain, Globe, Sparkles } from 'lucide-react';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -33,14 +33,14 @@ const Navbar = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         
         {/* Left: Logo */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
           <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded drop-shadow">
             <Code className="text-white" size={18} strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-black text-gray-100 uppercase tracking-tighter cursor-default">DCIS<span className="text-blue-500">.</span></span>
+          <span className="text-xl font-black text-gray-100 uppercase tracking-tighter">DCIS<span className="text-blue-500">.</span></span>
         </div>
 
-        {/* Center: Horizontal Navigation */}
+        {/* Center: Horizontal Navigation (Simplified as per User Request) */}
         <nav className="hidden lg:flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
           
           {/* GitHub Analysis */}
@@ -67,7 +67,7 @@ const Navbar = () => {
             <span>App Audit</span>
           </Link>
 
-          {/* Simple Link */}
+          {/* AI Tools */}
           <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4 text-nowrap">
             <Sparkles size={16} className="text-amber-500" />
             <span>AI Tools</span>
