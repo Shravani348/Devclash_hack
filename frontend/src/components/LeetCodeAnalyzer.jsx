@@ -12,7 +12,7 @@ function LeetCodeAnalyzer() {
       setReport(null);
 
       const response = await axios.post(
-        "http://localhost:5000/api/leetcode/analyze",
+        "http://localhost:8000/api/leetcode/analyze",
         { username }
       );
 

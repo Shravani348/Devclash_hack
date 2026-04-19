@@ -10,7 +10,7 @@ const ModuleAppAuditor = () => {
   const handleAudit = async (url) => {
     setIsAuditing(true);
     try {
-      const response = await fetch('http://127.0.0.1:5000/audit', {
+      const response = await fetch('http://127.0.0.1:8000/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
@@ -23,7 +23,7 @@ const ModuleAppAuditor = () => {
       }
     } catch (error) {
       console.error(error);
-      alert('Audit failed. Make sure backend is running on 5000.');
+      alert('Audit failed. Make sure backend is running on 8000.');
     }
     setIsAuditing(false);
   };

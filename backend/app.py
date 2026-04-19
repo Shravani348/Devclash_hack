@@ -43,6 +43,33 @@ def analyze_profile():
             os.remove(temp_path)
 
 # Teammate's Live App Auditor Route
+# Resume Audit Route (Module 3 - Complex AI Audit)
+@app.route('/api/resume/audit', methods=['POST'])
+def resume_audit():
+    if 'resume' not in request.files:
+        return jsonify({'error': 'No resume file provided'}), 400
+    
+    file = request.files['resume']
+    jd = request.form.get('jd', '')
+    
+    if file.filename == '' or not file.filename.endswith('.pdf'):
+        return jsonify({'error': 'Please upload a valid PDF file'}), 400
+
+    temp_path = os.path.join('/tmp' if os.name != 'nt' else os.environ.get('TEMP', './'), file.filename)
+    file.save(temp_path)
+
+    try:
+        from services.resume_service import audit_resume
+        result = audit_resume(temp_path, jd)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
 @app.route('/audit', methods=['POST'])
 def audit_app():
     data = request.get_json()
@@ -63,6 +90,26 @@ def audit_app():
         return jsonify({'error': f"Auditor crashed: {e.stderr}"}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/leetcode/analyze', methods=['POST'])
+def leetcode_analyze():
+    data = request.get_json()
+    username = data.get('username', 'Unknown')
+    
+    # Dummy logic matching the original Node.js implementation
+    dummy_response = {
+        'username': username,
+        'level': "Intermediate",
+        'ranking': 12345,
+        'skillScore': 75,
+        'problemsSolved': {
+            'easy': 120,
+            'medium': 80,
+            'hard': 25,
+            'total': 225
+        }
+    }
+    return jsonify({'success': True, 'data': dummy_response})
 
 if __name__ == "__main__":
     # We use 8000 to keep compatibility with the existing GitHub analyzer frontend

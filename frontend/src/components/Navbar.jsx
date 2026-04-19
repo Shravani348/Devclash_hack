@@ -55,8 +55,8 @@ const Navbar = () => {
             <span>LeetCode</span>
           </Link>
 
-          {/* Resume Audit (Placeholder for now) */}
-          <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
+          {/* Resume Audit */}
+          <Link to="/resume-audit" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4">
             <User size={16} className="text-emerald-500" />
             <span>Resume Audit</span>
           </Link>

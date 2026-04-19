@@ -6,6 +6,7 @@ import SignUp from './pages/SignUp';
 import DashboardHome from './pages/DashboardHome';
 import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
 import ModuleAppAuditor from './pages/ModuleAppAuditor';
+import ModuleResumeAudit from './pages/ModuleResumeAudit';
 import LeetCodeAnalyzer from './components/LeetCodeAnalyzer';
 import Navbar from './components/Navbar';
 
@@ -53,6 +54,15 @@ function App() {
                   <LeetCodeAnalyzer />
                 </div>
               </div>
+            </RequireAuth>
+          } 
+        />
+
+        <Route 
+          path="/resume-audit" 
+          element={
+            <RequireAuth>
+              <ModuleResumeAudit />
             </RequireAuth>
           } 
         />
