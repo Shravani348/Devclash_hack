@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+
 
 function LeetCodeAnalyzer() {
   const [username, setUsername] = useState("");
@@ -11,14 +11,16 @@ function LeetCodeAnalyzer() {
       setLoading(true);
       setReport(null);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/leetcode/analyze",
-        { username }
-      );
+      const response = await fetch("http://localhost:5000/api/leetcode/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+      });
+      const responseData = await response.json();
 
-      console.log("API Response:", response.data); // debug
+      console.log("API Response:", responseData); // debug
 
-        setReport(response.data.data);
+      setReport(responseData.data);
         setLoading(false);
     } catch (error) {
       console.error(error);
