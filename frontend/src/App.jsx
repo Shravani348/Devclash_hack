@@ -7,6 +7,7 @@ import DashboardHome from './pages/DashboardHome';
 import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
 import ModuleAppAuditor from './pages/ModuleAppAuditor';
 import ModuleLeetCode from './pages/ModuleLeetCode';
+import ModuleResumeAudit from './pages/ModuleResumeAudit';
 
 // Simple Auth Guard
 const RequireAuth = ({ children }) => {
@@ -33,6 +34,14 @@ function App() {
         />
 
         {/* Module Routes */}
+        <Route 
+          path="/resume-audit" 
+          element={
+            <RequireAuth>
+              <ModuleResumeAudit />
+            </RequireAuth>
+          } 
+        />
         <Route 
           path="/github-analysis" 
           element={
