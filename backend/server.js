@@ -3,13 +3,15 @@ const cors = require("cors");
 
 const app = express();
 
-app.use(cors());
+// Middleware
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
-// routes
+// Routes
 const leetcodeRoutes = require("./routes/leetcodeRoutes");
 app.use("/api/leetcode", leetcodeRoutes);
 
-app.listen(5000, () => {
-  console.log("Backend running on port 5000");
+// START SERVER — this was missing!
+app.listen(5001, () => {
+  console.log("Backend running on port 5001");
 });
