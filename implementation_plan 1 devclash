@@ -1,0 +1,164 @@
+# DCIS — Developer Career Intelligence System: Full Upgrade Plan
+
+## Project Overview
+
+This is a **Developer Career Intelligence platform** ("DCIS") with:
+- GitHub Profile Analyzer
+- Resume Auditor
+- Live App Auditor (Playwright — currently broken)
+- LeetCode Analyzer
+- 360° Career Audit
+- Code Quality Analyzer
+
+The user wants to **build this step-by-step**, starting with **Model 1: GitHub Analysis** — making it deeply accurate, LLM-powered, and connected to a persistent database.
+
+---
+
+## Current Issues Found
+
+> [!WARNING]
+> **Live App Auditor** is broken — Playwright times out waiting for `networkidle` on github.com (30s timeout). This is a known Playwright issue with pages that have continuous network activity.
+
+> [!CAUTION]
+> **`.env` file contains what appears to be a real API key** exposed in `OPENAI_API_KEY`. The key value looks like a Cohere/custom key, not OpenAI format. The analysis_service.py uses OpenAI but the key format is wrong — this will cause failures.
+
+> [!IMPORTANT]
+> **No `GEMINI_API_KEY`** set in `.env` — all Gemini-powered deep audit services fall back to rule-based analysis (inaccurate).
+
+> [!NOTE]
+> **No database** currently. User/analysis data is not persisted. MongoDB is in `package.json` dependencies (mongoose) but not used.
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **Do you have a Gemini API key?** The deep analysis (career audit, code quality, resume rewrite) requires `GEMINI_API_KEY=AIza...`. Get one FREE at https://aistudio.google.com/. Please share it so I can wire it into `.env`.
+
+> [!IMPORTANT]
+> **Do you have a GitHub Personal Access Token?** Without it, GitHub API is rate-limited to 60 requests/hour. Get one at https://github.com/settings/tokens (no special permissions needed for public repos). Please share it.
+
+> [!NOTE]
+> **MongoDB**: Do you want to use your existing MongoDB Atlas URI, or set up a local MongoDB? Mongoose is already in `package.json`.
+
+---
+
+## Step 1 Plan — GitHub Analysis (Model 1) Deep Overhaul
+
+This is the first step. We will make GitHub Analysis **brutally accurate** using Gemini LLM + rich data collection.
+
+---
+
+### What Will Change
+
+#### Backend — New GitHub Analysis Engine
+
+##### [MODIFY] [github_routes.py](file:///c:/Users/shrav/Desktop/Devclash_hack/backend/routes/github_routes.py)
+- Add pagination (fetch ALL repos, not just first 30)
+- Add `sort=pushed` for recency weighting
+- Add contribution graph data (commits/year)
+- Add language breakdown from GitHub API
+- Add follower/following ratio scoring
+- Add profile completeness scoring
+- Persist result to MongoDB
+
+##### [MODIFY] [analysis_service.py](file:///c:/Users/shrav/Desktop/Devclash_hack/backend/services/analysis_service.py)
+Complete rewrite with Gemini LLM as primary engine:
+- **Detect 15+ skill categories** (not just 4): DevOps, databases, frontend, mobile, ML/AI, cloud, security, testing, documentation, architecture, open source contributions, code quality, project complexity, version control hygiene
+- **Per-repo scoring** with weighted averaging
+- **Commit frequency analysis** (active vs abandoned repos)
+- **Code complexity scoring** via AST-aware pattern matching
+- **Language proficiency scoring** per language
+- **README quality scoring** (has badges, screenshots, setup instructions)
+- **CI/CD detection** (GitHub Actions, Travis, Circle, Jenkins)
+- **Dockerization detection**
+- **Open source contribution detection** (not just own repos)
+- **LLM Gemini summary** — specific career-level verdict citing actual file names
+
+##### [NEW] [github_analyzer.py](file:///c:/Users/shrav/Desktop/Devclash_hack/backend/services/github_analyzer.py)
+A new comprehensive GitHub analysis service (replaces the old one):
+- `fetch_user_profile()` — full GitHub profile with account age, contribution count
+- `fetch_all_repos()` — paginated, all public repos
+- `score_profile_completeness()` — bio, avatar, location, website, pinned repos
+- `detect_tech_stack()` — from repo languages + package.json + requirements.txt content
+- `score_repo_quality()` — per-repo: README, tests, CI, size, last commit date, issues, PRs
+- `detect_skills_from_code()` — pattern scan on actual code files
+- `gemini_profile_summary()` — LLM narrative with specific file citations
+- `calculate_github_score()` — weighted formula (activity + quality + diversity + community)
+
+##### [NEW] [db_service.py](file:///c:/Users/shrav/Desktop/Devclash_hack/backend/services/db_service.py)
+MongoDB persistence:
+- Save analysis results per username with timestamp
+- Cache results for 24 hours (avoid re-scanning)
+- Track analysis history
+
+##### [MODIFY] [requirements.txt](file:///c:/Users/shrav/Desktop/Devclash_hack/backend/requirements.txt)
+Add: `google-generativeai`, `pymongo`, `python-dateutil`
+
+##### [MODIFY] [.env](file:///c:/Users/shrav/Desktop/Devclash_hack/backend/.env)
+Add: `GEMINI_API_KEY`, `GITHUB_TOKEN`, `MONGODB_URI`
+
+---
+
+#### Frontend — GitHub Analysis UI Overhaul
+
+##### [MODIFY] [ModuleProfileAnalyzer.jsx](file:///c:/Users/shrav/Desktop/Devclash_hack/frontend/src/pages/ModuleProfileAnalyzer.jsx)
+Currently minimal. Will become a rich dashboard showing:
+- **Hero card**: Avatar, name, bio, GitHub stats (repos, stars, followers, account age)
+- **GitHub Score ring** with animated fill
+- **Skills radar chart** — 8+ dimensions
+- **Language breakdown** — pie/bar chart
+- **Repo health grid** — each repo with score, verdict (show/neutral/hide), issues
+- **Code quality scores** — modularity, security, error handling, testing
+- **Top repos to showcase** with reasons
+- **Repos to hide** with specific improvement advice
+- **Commit activity heatmap** (last 12 months)
+- **AI Verdict** — Gemini narrative with citations
+- **Skill gaps** — what's missing, with learning resource links
+- **Career level badge** — Beginner/Junior/Mid/Senior/Staff
+- **"Save Report" button** — persist to DB
+
+##### [NEW] [GitHubReport.jsx](file:///c:/Users/shrav/Desktop/Devclash_hack/frontend/src/components/GitHubReport.jsx)
+Reusable report component for the rich analysis output.
+
+---
+
+### GitHub Score Formula (New — Accurate)
+
+```
+GitHub Score = (
+  Profile Completeness   × 0.10   [0-100]
+  + Activity Score       × 0.20   [commits/year, push frequency]  
+  + Repo Quality Avg     × 0.25   [per-repo: README, tests, CI, recency]
+  + Tech Diversity       × 0.15   [# of distinct languages/frameworks]
+  + Community Score      × 0.10   [stars, forks, followers, PRs to others]
+  + Code Quality         × 0.20   [pattern scan + Gemini analysis]
+)
+```
+
+---
+
+## Verification Plan
+
+### Backend Tests
+```bash
+# Test GitHub analysis endpoint
+curl -X POST http://localhost:8000/api/github/analyze -H "Content-Type: application/json" -d '{"username":"torvalds"}'
+```
+
+### Manual Verification
+- Run analysis on a known developer (e.g., `torvalds`, `gaearon`) and verify the score is reasonable
+- Verify analysis is saved to MongoDB
+- Verify cached result returns in < 1s on second call
+- Verify frontend renders all sections correctly
+
+---
+
+## Future Steps (After Step 1 is Approved)
+
+- **Step 2**: Resume Auditor accuracy improvements
+- **Step 3**: LeetCode real API integration
+- **Step 4**: Fix Live App Auditor (Playwright timeout fix)  
+- **Step 5**: 360° Career Audit full integration
+- **Step 6**: Database: user history, saved reports, comparison view
+- **Step 7**: Notifications, email reports, shareable profile links

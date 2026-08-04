@@ -5,7 +5,17 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Lazy OpenAI client — created only when needed to avoid crash on startup
+_client = None
+def get_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is not set. Please add it to your .env file.")
+        _client = OpenAI(api_key=api_key)
+    return _client
 
 # GitHub API Headers
 HEADERS = {"Accept": "application/vnd.github.v3+json"}
@@ -151,7 +161,7 @@ def get_ai_explanation(repos, result):
 
         Write a 4-sentence career evaluation (2nd person).
         """
-        response = client.chat.completions.create(
+        response = get_client().chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}]
         )

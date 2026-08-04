@@ -51,10 +51,17 @@ const ResumeAuditReport = ({ data }) => {
   const downloadPDF = () => {
     const element = reportRef.current;
     html2pdf().from(element).set({
-      margin: 10,
-      filename: 'resume_audit.pdf',
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: [8, 8, 8, 8],
+      filename: 'resume_audit_report.pdf',
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     }).save();
   };
 

@@ -8,6 +8,7 @@ import ModuleProfileAnalyzer from './pages/ModuleProfileAnalyzer';
 import ModuleAppAuditor from './pages/ModuleAppAuditor';
 import ModuleResumeAudit from './pages/ModuleResumeAudit';
 import ModuleLeetCode from './pages/ModuleLeetCode';
+import ModuleCareerAudit from './pages/ModuleCareerAudit';
 
 // Simple Auth Guard
 const RequireAuth = ({ children }) => {
@@ -65,6 +66,16 @@ function App() {
           element={
             <RequireAuth>
               <ModuleAppAuditor />
+            </RequireAuth>
+          } 
+        />
+
+        {/* NEW: 360° Career Audit */}
+        <Route 
+          path="/career-audit" 
+          element={
+            <RequireAuth>
+              <ModuleCareerAudit />
             </RequireAuth>
           } 
         />

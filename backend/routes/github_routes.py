@@ -1,110 +1,72 @@
+"""
+GitHub Routes — /api/github/*
+Uses the new comprehensive github_analyzer.py
+with MongoDB caching via db_service.py
+"""
+
 from flask import Blueprint, request, jsonify
-import requests
-import os
-import json
-from services.analysis_service import analyze_repos, get_ai_explanation, HEADERS
+from services.github_analyzer import analyze_github_profile
+from services.db_service import (
+    save_github_analysis, get_cached_github_analysis,
+    get_analysis_history, get_leaderboard, db_health
+)
 
 github_bp = Blueprint("github", __name__)
 
+
 @github_bp.route("/analyze", methods=["POST"])
 def analyze():
-    # Handle both JSON and FormData
+    """
+    POST /api/github/analyze
+    Body (JSON or form): { "username": "octocat" }
+    Optional: { "force": true } to bypass cache
+    """
+    # Accept JSON or multipart form
     if request.is_json:
-        data = request.json
-        username = data.get("username")
-        github_url = f"https://github.com/{username}" if username else None
+        data = request.get_json() or {}
     else:
-        username = request.form.get("username")
-        github_url = request.form.get("githubUrl") or (f"https://github.com/{username}" if username else None)
+        data = request.form.to_dict()
 
-    print("USERNAME RECEIVED:", username)
+    username = (data.get("username") or "").strip().lstrip("@")
+    if not username:
+        return jsonify({"error": "GitHub username is required"}), 400
 
-    total_repos = 0
-    total_stars = 0
-    starred_repos = 0
-    github_score = 0
-    gaps = []
-    explanation = "No GitHub analysis."
-    scores = {"backend": 0, "api": 0, "auth": 0, "testing": 0}
-    repo_list = []
-    starred_repo_list = []
-    user_profile = {}
-    analysis_result = {
-        "has_backend": False, "has_api_calls": False,
-        "has_auth": False, "has_testing": False, "has_readme": False
-    }
+    force_refresh = str(data.get("force", "false")).lower() == "true"
 
-    if username:
-        # Fetch user profile
-        profile_resp = requests.get(f"https://api.github.com/users/{username}", headers=HEADERS)
-        if profile_resp.status_code == 200:
-            p = profile_resp.json()
-            user_profile = {
-                "login":      p.get("login", username),
-                "name":       p.get("name") or username,
-                "avatar_url": p.get("avatar_url", ""),
-                "bio":        p.get("bio") or "",
-                "location":   p.get("location") or "",
-                "followers":  p.get("followers", 0),
-                "following":  p.get("following", 0),
-                "html_url":   p.get("html_url", f"https://github.com/{username}"),
-            }
+    # ── Cache check ──────────────────────────────────────────────────────────
+    if not force_refresh:
+        cached = get_cached_github_analysis(username)
+        if cached:
+            return jsonify(cached)
 
-        repos_url = f"https://api.github.com/users/{username}/repos"
-        response = requests.get(repos_url, headers=HEADERS)
+    # ── Run full analysis ────────────────────────────────────────────────────
+    result = analyze_github_profile(username)
+    if "error" in result:
+        return jsonify(result), 404 if "not found" in result["error"].lower() else 500
 
-        if response.status_code == 200:
-            repos = response.json()
-            if isinstance(repos, list):
-                total_repos = len(repos)
-                total_stars = sum(r.get("stargazers_count", 0) for r in repos if isinstance(r, dict))
-                starred_repos = sum(1 for r in repos if isinstance(r, dict) and r.get("stargazers_count", 0) > 0)
-                repo_list = [
-                    {"name": r.get("name"), "stars": r.get("stargazers_count", 0), "url": r.get("html_url", "")}
-                    for r in repos if isinstance(r, dict)
-                ]
-                starred_repo_list = [r for r in repo_list if r["stars"] > 0]
-                github_score = min(100, total_repos * 5 + total_stars)
+    # ── Persist to DB ────────────────────────────────────────────────────────
+    save_github_analysis(username, result)
 
-                try:
-                    gaps, analysis_result, scores = analyze_repos(repos)
-                except Exception as e:
-                    print("ANALYSIS ERROR:", e)
-                    gaps = ["Error analyzing repositories"]
-                    analysis_result = {
-                        "has_backend": False, "has_api_calls": False,
-                        "has_auth": False, "has_testing": False, "has_readme": False
-                    }
-                    scores = {"backend": 0, "api": 0, "auth": 0, "testing": 0}
-                    repo_list = []
-                    starred_repo_list = []
-
-                try:
-                    explanation = get_ai_explanation(repos, analysis_result)
-                except Exception as e:
-                    print("AI ERROR:", e)
-                    explanation = "AI analysis temporarily unavailable."
-        elif response.status_code == 403:
-            return jsonify({"error": "GitHub API rate limit exceeded"}), 429
+    return jsonify(result)
 
 
-    overall_score = github_score
+@github_bp.route("/history/<username>", methods=["GET"])
+def analysis_history(username):
+    """GET /api/github/history/:username — score history for progress tracking."""
+    limit = min(int(request.args.get("limit", 10)), 50)
+    history = get_analysis_history(username.strip(), limit=limit)
+    return jsonify({"username": username, "history": history})
 
-    # Pass AI text directly without JSON parsing
-    explanation_text = explanation if explanation else "No AI insight available"
 
-    return jsonify({
-        "githubScore": github_score,
-        "overallScore": overall_score,
-        "gaps": gaps,
-        "aiExplanation": explanation_text,
-        "skillDistribution": scores,
-        "userProfile": user_profile,
-        "githubAnalysis": {
-            "repos": total_repos,
-            "starredRepos": starred_repos,
-            "stars": total_stars,
-            "repoList": repo_list,
-            "starredRepoList": starred_repo_list,
-        }
-    })
+@github_bp.route("/leaderboard", methods=["GET"])
+def leaderboard():
+    """GET /api/github/leaderboard — top developers by score."""
+    limit = min(int(request.args.get("limit", 20)), 100)
+    board = get_leaderboard(limit=limit)
+    return jsonify({"leaderboard": board})
+
+
+@github_bp.route("/db-health", methods=["GET"])
+def database_health():
+    """GET /api/github/db-health — check database connectivity."""
+    return jsonify(db_health())

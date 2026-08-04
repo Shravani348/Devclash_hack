@@ -5,3 +5,9 @@ requests
 openai
 playwright
 python-dotenv
+google-genai
+google-generativeai
+pymongo
+python-dateutil
+anthropic>=0.30.0
+reportlab

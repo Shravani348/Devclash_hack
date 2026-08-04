@@ -91,16 +91,48 @@ const ResumeAuditResult = ({ data, onReset }) => {
 
   const handleDownload = async () => {
     setDownloading(true);
-    const element = document.getElementById('resume-audit-report');
-    const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#080C18' });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`resume-audit-${data.sections?.checklist[0]?.value || 'report'}.pdf`);
-    setDownloading(false);
+    try {
+      const element = document.getElementById('resume-audit-report');
+      // Temporarily expand all sections for the PDF capture
+      const details = element.querySelectorAll('[data-pdf-expand]');
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#080C18',
+        useCORS: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // First page
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Additional pages
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const nameVal = data.sections?.checklist?.[0]?.value || 'report';
+      pdf.save(`resume-audit-${nameVal}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      alert('PDF generation failed. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const categories = [
@@ -421,16 +453,233 @@ const ResumeAuditResult = ({ data, onReset }) => {
               </div>
            </div>
         </ExpandableSection>
+
+        {/* ── NEW: Priority Ranking ── */}
+        {data.priority_ranking?.length > 0 && (
+          <ExpandableSection id="priority" icon={Award} title="Priority Action List" color="#f59e0b"
+            badge={`${data.priority_ranking.length} actions`}
+            description="Ranked by impact — fix these first for the fastest score improvement.">
+            <div className="space-y-3">
+              {data.priority_ranking.map((p, i) => {
+                const impactColors = { High: 'text-rose-400 bg-rose-500/10 border-rose-500/20', Medium: 'text-amber-400 bg-amber-500/10 border-amber-500/20', Low: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+                return (
+                  <div key={i} className="p-4 rounded-xl bg-white/5 border border-gray-800">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded border ${impactColors[p.impact] || 'text-gray-400 bg-gray-800 border-gray-700'}`}>{p.impact}</span>
+                      <span className="text-xs font-bold text-gray-200">#{p.rank} — {p.category}</span>
+                    </div>
+                    <p className="text-xs text-gray-300 mb-1">{p.issue}</p>
+                    {p.action && <p className="text-xs text-amber-400"><ArrowRight size={10} className="inline mr-1" />{p.action}</p>}
+                    {p.ready_to_paste && (
+                      <div className="mt-2 p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 italic">
+                        Copy: "{p.ready_to_paste}"
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Score Breakdown ── */}
+        {data.quantified_score_breakdown?.weights && (
+          <ExpandableSection id="score-breakdown" icon={Sparkles} title="Score Breakdown" color="#6366f1"
+            description="Exactly how your overall score was calculated — and why.">
+            <div className="space-y-4">
+              {Object.entries(data.quantified_score_breakdown.weights).map(([cat, vals], i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
+                    <span className="text-gray-400">{cat} <span className="text-gray-600 normal-case font-normal">({vals.weight_pct}% weight)</span></span>
+                    <span className="text-indigo-400">{vals.weighted_contribution?.toFixed(1)} pts</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-indigo-500 transition-all duration-1000"
+                      style={{ width: `${Math.min((vals.raw_score / (cat === 'ats' || cat === 'impact' ? 100 : 10)) * 100, 100)}%` }} />
+                  </div>
+                </div>
+              ))}
+              {data.quantified_score_breakdown.explanation && (
+                <p className="text-xs text-gray-400 italic pt-2">{data.quantified_score_breakdown.explanation}</p>
+              )}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Impact Quantification ── */}
+        {data.impact_quantification && (
+          <ExpandableSection id="impact" icon={Sparkles} title="Impact Quantification" color="#10b981"
+            badge={`Score: ${data.impact_quantification.score}`}
+            description="Flags bullet points with no measurable outcome and rewrites them with metric placeholders.">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-400">{data.impact_quantification.summary}</p>
+              {data.impact_quantification.flagged_bullets?.map((fb, i) => (
+                <div key={i} className="glass-panel p-4 bg-dark-950/40 border-l-4 border-emerald-500/50">
+                  <p className="text-xs text-gray-500 italic mb-1">"{fb.original}"</p>
+                  <p className="text-xs text-emerald-400"><ArrowRight size={10} className="inline mr-1" />{fb.rewritten}</p>
+                  <span className="text-[10px] text-gray-600 mt-1 block">Missing: {fb.missing_metric_type}</span>
+                </div>
+              ))}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Action Verb Strength ── */}
+        {data.action_verb_strength && (
+          <ExpandableSection id="verbs" icon={Type} title="Action Verb Strength" color="#f97316"
+            badge={`Score: ${data.action_verb_strength.score}`}
+            description="Flags weak/passive verbs and suggests power alternatives.">
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400">{data.action_verb_strength.summary}</p>
+              {data.action_verb_strength.weak_verbs_found?.map((v, i) => (
+                <div key={i} className="glass-panel p-4 bg-dark-950/40 border-l-4 border-orange-500/50">
+                  <p className="text-xs text-gray-400 mb-1">
+                    <span className="text-rose-400 line-through">{v.weak_verb}</span>
+                    <ArrowRight size={10} className="inline mx-2 text-gray-600" />
+                    <span className="text-emerald-400 font-bold">{v.suggested_verb}</span>
+                  </p>
+                  <p className="text-xs text-gray-500 italic">Original: "{v.original_phrase}"</p>
+                  <p className="text-xs text-emerald-400 mt-1">Rewritten: {v.rewritten_phrase}</p>
+                </div>
+              ))}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Keyword Density vs JD ── */}
+        {data.keyword_density_vs_jd?.jd_provided && (
+          <ExpandableSection id="keywords" icon={FileText} title="Keyword Match vs Job Description" color="#3b82f6"
+            badge={`${data.keyword_density_vs_jd.match_percentage}% match`}
+            description="How well your resume's keywords align with the job description.">
+            <div className="space-y-4">
+              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-blue-500 transition-all duration-1000"
+                  style={{ width: `${data.keyword_density_vs_jd.match_percentage}%` }} />
+              </div>
+              {data.keyword_density_vs_jd.exact_matches?.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Exact Matches</p>
+                  <div className="flex flex-wrap gap-2">
+                    {data.keyword_density_vs_jd.exact_matches.map((k, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[11px] border border-emerald-500/20">{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {data.keyword_density_vs_jd.missing_keywords?.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Missing Critical Keywords</p>
+                  <div className="flex flex-wrap gap-2">
+                    {data.keyword_density_vs_jd.missing_keywords.map((k, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 text-[11px] border border-rose-500/20">{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: ATS Parseability ── */}
+        {data.ats_parseability && (
+          <ExpandableSection id="ats" icon={Settings} title="ATS Parseability" color="#8b5cf6"
+            badge={`Score: ${data.ats_parseability.score}`}
+            description="Flags formatting choices that break Applicant Tracking Systems.">
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400">{data.ats_parseability.summary}</p>
+              {data.ats_parseability.flags?.map((f, i) => (
+                <div key={i} className="glass-panel p-4 bg-dark-950/40 border-l-4 border-purple-500/50">
+                  <p className="text-xs font-bold text-purple-400 mb-1">{f.issue}</p>
+                  <p className="text-xs text-gray-400">{f.detail}</p>
+                  <p className="text-xs text-emerald-400 mt-1"><ArrowRight size={10} className="inline mr-1" />{f.fix}</p>
+                </div>
+              ))}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Seniority Consistency ── */}
+        {data.seniority_consistency && (
+          <ExpandableSection id="seniority" icon={HelpCircle} title="Seniority Consistency" color="#ec4899"
+            badge={data.seniority_consistency.consistent ? 'Consistent' : 'Inconsistent'}
+            description="Checks whether your claimed experience level matches your resume's language.">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-xl bg-white/5 border border-gray-800">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Claimed Level</p>
+                  <p className="text-sm font-bold text-white mt-1">{data.seniority_consistency.claimed_level}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-gray-800">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Detected Level</p>
+                  <p className={`text-sm font-bold mt-1 ${data.seniority_consistency.consistent ? 'text-emerald-400' : 'text-rose-400'}`}>{data.seniority_consistency.detected_level}</p>
+                </div>
+              </div>
+              {data.seniority_consistency.red_flags?.map((rf, i) => (
+                <div key={i} className="glass-panel p-4 bg-dark-950/40 border-l-4 border-rose-500/50">
+                  <p className="text-xs text-rose-400 font-bold mb-1">Red Flag: "{rf.claim}"</p>
+                  <p className="text-xs text-gray-400">{rf.concern}</p>
+                </div>
+              ))}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Redundancy Check ── */}
+        {data.redundancy_check?.redundant_items?.length > 0 && (
+          <ExpandableSection id="redundancy" icon={List} title="Redundancy Check" color="#64748b"
+            badge={`${data.redundancy_check.redundant_items.length} found`}
+            description="Repeated phrases or achievements that appear in multiple places without adding new information.">
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400">{data.redundancy_check.summary}</p>
+              {data.redundancy_check.redundant_items.map((r, i) => (
+                <div key={i} className="glass-panel p-4 bg-dark-950/40 border-l-4 border-gray-500/50">
+                  <p className="text-xs font-bold text-gray-300 mb-1">"{r.phrase}"</p>
+                  <p className="text-[11px] text-gray-500">Appears in: {r.locations?.join(' and ')}</p>
+                  <p className="text-xs text-amber-400 mt-1"><ArrowRight size={10} className="inline mr-1" />{r.recommendation}</p>
+                </div>
+              ))}
+            </div>
+          </ExpandableSection>
+        )}
+
+        {/* ── NEW: Industry Benchmark ── */}
+        {data.industry_benchmark && (
+          <ExpandableSection id="benchmark" icon={Award} title="Industry Benchmark" color="#0ea5e9"
+            badge={data.industry_benchmark.this_resume_vs_benchmark}
+            description="How your resume compares to others applying for the same role at the same level.">
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="p-3 rounded-xl bg-white/5 border border-gray-800 text-center">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Role</p>
+                  <p className="text-xs font-bold text-white mt-1">{data.industry_benchmark.role}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-gray-800 text-center">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Typical Score</p>
+                  <p className="text-xs font-bold text-sky-400 mt-1">{data.industry_benchmark.typical_score_range}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-gray-800 text-center">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Your Standing</p>
+                  <p className={`text-xs font-bold mt-1 ${
+                    data.industry_benchmark.this_resume_vs_benchmark === 'above' ? 'text-emerald-400' :
+                    data.industry_benchmark.this_resume_vs_benchmark === 'within' ? 'text-sky-400' : 'text-rose-400'
+                  }`}>{data.industry_benchmark.this_resume_vs_benchmark}</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">{data.industry_benchmark.benchmark_explanation}</p>
+            </div>
+          </ExpandableSection>
+        )}
+
       </div>
 
       {/* ── Actions ── */}
       <div className="mt-12 space-y-4">
-        <button 
+        <button
           onClick={handleDownload}
           disabled={downloading}
           className="w-full py-5 rounded-2xl bg-gradient-to-r from-primary-600 via-indigo-600 to-purple-600 text-white font-black text-xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(79,70,229,0.3)] hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
         >
-          {downloading ? <Loader2 className="animate-spin" /> : <><Download size={22} /> Download Full Audit Report as PDF</>}
+          {downloading ? <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full" /> : <><Download size={22} /> Download Full Audit Report as PDF</>}
         </button>
         <button onClick={onReset} className="w-full py-4 text-gray-500 font-bold hover:text-white transition-colors">
           Analyze Another Resume

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Code, User, Brain, Globe, Sparkles } from 'lucide-react';
+import { LogOut, Code, User, Brain, Globe, Sparkles, Zap } from 'lucide-react';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -67,10 +67,13 @@ const Navbar = () => {
             <span>App Audit</span>
           </Link>
 
-          {/* AI Tools */}
-          <Link to="/home" className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors p-4 text-nowrap">
-            <Sparkles size={16} className="text-amber-500" />
-            <span>AI Tools</span>
+          {/* 360° Career Audit — NEW */}
+          <Link to="/career-audit" className="flex items-center gap-2 text-sm font-bold transition-all p-3 rounded-lg text-nowrap"
+            style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#a5b4fc' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.15)'; }}>
+            <Zap size={14} />
+            <span>360° Audit</span>
           </Link>
 
         </nav>
