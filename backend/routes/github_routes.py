@@ -42,7 +42,8 @@ def analyze():
     # ── Run full analysis ────────────────────────────────────────────────────
     result = analyze_github_profile(username)
     if "error" in result:
-        return jsonify(result), 404 if "not found" in result["error"].lower() else 500
+        status_code = result.get("status_code", 404 if "not found" in result["error"].lower() else 500)
+        return jsonify(result), status_code
 
     # ── Persist to DB ────────────────────────────────────────────────────────
     save_github_analysis(username, result)

@@ -26,11 +26,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-HEADERS = {
-    "Accept": "application/vnd.github.v3+json",
-    **({"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN and GITHUB_TOKEN != "your_github_token_here" else {})
-}
+def get_github_headers():
+    load_dotenv(override=True)
+    token = os.getenv("GITHUB_TOKEN", "").strip()
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    if token and token != "your_github_token_here":
+        headers["Authorization"] = f"token {token}"
+    return headers
 
 # ─── Tuning constants ────────────────────────────────────────────────────────
 MAX_REPOS_FULL_SCAN   = 8    # repos to do deep file-level scan on
@@ -103,22 +105,44 @@ ANTI_PATTERNS = [
 #  GITHUB API HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
+class GitHubAPIError(Exception):
+    def __init__(self, message, status_code=500):
+        super().__init__(message)
+        self.status_code = status_code
+
+
 def _gh(url, timeout=8):
-    """Make a GitHub API request, return JSON or None on error."""
+    """Make a GitHub API request, return JSON or raise GitHubAPIError on error."""
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=timeout)
+        resp = requests.get(url, headers=get_github_headers(), timeout=timeout)
         if resp.status_code == 200:
             return resp.json()
-        return None
-    except Exception:
-        return None
+        
+        if resp.status_code == 401:
+            raise GitHubAPIError("GitHub API token is invalid or unauthorized.", 401)
+        if resp.status_code == 403:
+            if resp.headers.get('X-RateLimit-Remaining') == '0':
+                raise GitHubAPIError("GitHub API rate limit exceeded.", 429)
+            raise GitHubAPIError("GitHub API forbidden. Check permissions or rate limits.", 403)
+        if resp.status_code == 404:
+            raise GitHubAPIError("GitHub resource not found.", 404)
+        
+        raise GitHubAPIError(f"GitHub API returned status {resp.status_code}", resp.status_code)
+    except GitHubAPIError:
+        raise
+    except requests.exceptions.Timeout:
+        raise GitHubAPIError("GitHub API request timed out.", 504)
+    except Exception as e:
+        raise GitHubAPIError(f"GitHub API request failed: {str(e)}", 500)
 
 
 def _raw(url, timeout=5):
     """Fetch raw file content."""
     try:
-        resp = requests.get(url, timeout=timeout)
-        return resp.text if resp.status_code == 200 else ""
+        resp = requests.get(url, headers=get_github_headers(), timeout=timeout)
+        if resp.status_code == 200:
+            return resp.text
+        return ""
     except Exception:
         return ""
 
@@ -131,7 +155,7 @@ def fetch_user_profile(username: str) -> dict:
     """Fetch complete GitHub user profile."""
     data = _gh(f"https://api.github.com/users/{username}")
     if not data:
-        return {}
+        raise GitHubAPIError(f"GitHub user '{username}' not found.", 404)
 
     created = data.get("created_at", "")
     account_age_years = 0
@@ -168,12 +192,18 @@ def fetch_all_repos(username: str) -> list:
     repos = []
     page = 1
     while True:
-        batch = _gh(
-            f"https://api.github.com/users/{username}/repos"
-            f"?sort=pushed&per_page=100&page={page}"
-        )
-        if not batch or not isinstance(batch, list):
-            break
+        try:
+            batch = _gh(
+                f"https://api.github.com/users/{username}/repos"
+                f"?sort=pushed&per_page=100&page={page}"
+            )
+            if not batch or not isinstance(batch, list):
+                break
+        except GitHubAPIError as e:
+            if page == 1:
+                raise e # Bubble up if first page fails
+            break # Otherwise just stop paginating
+
         repos.extend(batch)
         if len(batch) < 100:
             break
@@ -731,14 +761,15 @@ def analyze_github_profile(username: str) -> dict:
     """
     print(f"[GithubAnalyzer] Starting analysis for: {username}")
 
-    # 1. Fetch profile & repos
-    profile = fetch_user_profile(username)
-    if not profile:
-        return {"error": f"GitHub user '{username}' not found or API unreachable."}
+    try:
+        # 1. Fetch profile & repos
+        profile = fetch_user_profile(username)
+        repos = fetch_all_repos(username)
+        if not repos:
+            return {"error": f"No public repositories found for '{username}'.", "status_code": 404}
+    except GitHubAPIError as e:
+        return {"error": str(e), "status_code": e.status_code}
 
-    repos = fetch_all_repos(username)
-    if not repos:
-        return {"error": f"No public repositories found for '{username}'."}
 
     print(f"[GithubAnalyzer] Found {len(repos)} repos. Starting deep scan...")
 

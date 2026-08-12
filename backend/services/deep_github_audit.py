@@ -9,13 +9,13 @@ import re
 from dotenv import load_dotenv
 from services.gemini_client import ask_gemini_json
 
-load_dotenv()
-
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-HEADERS = {
-    "Authorization": f"token {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3+json"
-} if GITHUB_TOKEN else {"Accept": "application/vnd.github.v3+json"}
+def get_github_headers():
+    load_dotenv(override=True)
+    token = os.getenv("GITHUB_TOKEN", "").strip()
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    if token and token != "your_github_token_here":
+        headers["Authorization"] = f"token {token}"
+    return headers
 
 MAX_REPOS = 6
 MAX_FILES_PER_REPO = 15
@@ -29,7 +29,7 @@ def _get_all_repos(username: str) -> list:
         try:
             resp = requests.get(
                 f"https://api.github.com/users/{username}/repos?sort=updated&per_page=30&page={page}",
-                headers=HEADERS, timeout=8
+                headers=get_github_headers(), timeout=8
             )
             batch = resp.json() if resp.status_code == 200 else []
             if not batch:
@@ -79,7 +79,7 @@ def _collect_code_files(username: str, repos: list) -> dict:
         try:
             tree = requests.get(
                 f"https://api.github.com/repos/{username}/{repo_name}/git/trees/{branch}?recursive=1",
-                headers=HEADERS, timeout=8
+                headers=get_github_headers(), timeout=8
             ).json().get("tree", [])
         except:
             continue
@@ -132,7 +132,7 @@ def _collect_code_files(username: str, repos: list) -> dict:
                 break
             raw_url = f"https://raw.githubusercontent.com/{username}/{repo_name}/{branch}/{file['path']}"
             try:
-                content = requests.get(raw_url, timeout=4).text
+                content = requests.get(raw_url, headers=get_github_headers(), timeout=4).text
                 if len(content.strip()) < 30:
                     continue
                 collected["files"].append({
