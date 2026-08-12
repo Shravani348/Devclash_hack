@@ -154,6 +154,7 @@ def generate_roadmap():
             target_role=data.get('target_role', 'Full Stack Developer'),
             gaps=data.get('gaps', [])
         ))
+    # TODO: Add error handling
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
